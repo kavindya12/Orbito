@@ -45,6 +45,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
+  ownedProjects   Project[]         @relation("ProjectOwner")
   memberships     WorkspaceMember[]
   projectMembers  ProjectMember[]
   assignedTasks   Task[]            @relation("TaskAssignee")
@@ -85,6 +86,7 @@ model WorkspaceMember {
 model Project {
   id          String        @id @default(cuid())
   workspaceId String
+  ownerId     String
   name        String
   description String?
   deadline    DateTime?
@@ -93,12 +95,14 @@ model Project {
   updatedAt   DateTime      @updatedAt
 
   workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  owner       User            @relation("ProjectOwner", fields: [ownerId], references: [id])
   members     ProjectMember[]
   columns     BoardColumn[]
   tasks       Task[]
   activities  Activity[]
 
   @@index([workspaceId])
+  @@index([ownerId])
 }
 
 model ProjectMember {

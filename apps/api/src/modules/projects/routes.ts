@@ -69,6 +69,7 @@ router.post(
       const created = await tx.project.create({
         data: {
           workspaceId: req.params.workspaceId,
+          ownerId: req.user!.id,
           name,
           description,
           deadline: deadline ? new Date(deadline) : null,
@@ -91,6 +92,7 @@ router.post(
         include: {
           columns: { orderBy: { position: 'asc' } },
           members: { include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } } },
+          owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
         },
       });
       return created;
@@ -137,7 +139,10 @@ router.patch(
   '/:projectId',
   validateBody(updateProjectSchema),
   asyncHandler(async (req, res) => {
-    await getProjectAccess(req.params.projectId, req.user!.id);
+    const existing = await getProjectAccess(req.params.projectId, req.user!.id);
+    if (existing.ownerId !== req.user!.id) {
+      throw new AppError('Only the project owner can edit this project', 403, 'FORBIDDEN');
+    }
     const { deadline, memberIds, ...rest } = req.body;
     const project = await prisma.project.update({
       where: { id: req.params.projectId },
@@ -150,7 +155,12 @@ router.patch(
     if (memberIds) {
       await prisma.projectMember.deleteMany({ where: { projectId: project.id } });
       await prisma.projectMember.createMany({
-        data: memberIds.map((userId: string) => ({ projectId: project.id, userId })),
+        data: [
+          { projectId: project.id, userId: existing.ownerId },
+          ...memberIds
+            .filter((userId: string) => userId !== existing.ownerId)
+            .map((userId: string) => ({ projectId: project.id, userId })),
+        ],
         skipDuplicates: true,
       });
     }
@@ -168,7 +178,10 @@ router.patch(
 router.delete(
   '/:projectId',
   asyncHandler(async (req, res) => {
-    await getProjectAccess(req.params.projectId, req.user!.id);
+    const existing = await getProjectAccess(req.params.projectId, req.user!.id);
+    if (existing.ownerId !== req.user!.id) {
+      throw new AppError('Only the project owner can delete this project', 403, 'FORBIDDEN');
+    }
     await prisma.project.delete({ where: { id: req.params.projectId } });
     res.json({ ok: true });
   })

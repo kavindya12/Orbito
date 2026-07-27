@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PriorityBadge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/avatar';
 import { cn, formatDate } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth-store';
 import type { Project, Task, User } from '@/types';
 
 type TaskDrawerProps = {
@@ -23,6 +24,8 @@ type TaskDrawerProps = {
 export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClose }: TaskDrawerProps) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const user = useAuthStore((s) => s.user);
+  const isOwner = !!user && project.ownerId === user.id;
   const [comment, setComment] = useState('');
   const [error, setError] = useState('');
 
@@ -86,9 +89,11 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
         <div className="flex items-center justify-between border-b border-[var(--border)] p-4">
           <h2 className="font-semibold">Task Details</h2>
           <div className="flex gap-2">
-            <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate()}>
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
+            {isOwner && (
+              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate()}>
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-5 w-5" />
             </Button>
@@ -101,11 +106,21 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            {!isOwner && (
+              <p className="rounded-[10px] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--muted)]">
+                You can change status. Only the project owner can edit other details.
+              </p>
+            )}
             <div className="space-y-2">
               <Label>Title</Label>
               <Input
                 defaultValue={task.title}
-                onBlur={(e) => e.target.value !== task.title && updateMutation.mutate({ title: e.target.value })}
+                disabled={!isOwner}
+                onBlur={(e) =>
+                  isOwner &&
+                  e.target.value !== task.title &&
+                  updateMutation.mutate({ title: e.target.value })
+                }
               />
             </div>
 
@@ -114,7 +129,9 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
               <Textarea
                 defaultValue={task.description ?? ''}
                 rows={4}
+                disabled={!isOwner}
                 onBlur={(e) =>
+                  isOwner &&
                   e.target.value !== (task.description ?? '') &&
                   updateMutation.mutate({ description: e.target.value || null })
                 }
@@ -126,7 +143,8 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
                 <Label>Priority</Label>
                 <Select
                   defaultValue={task.priority}
-                  onValueChange={(v) => updateMutation.mutate({ priority: v })}
+                  disabled={!isOwner}
+                  onValueChange={(v) => isOwner && updateMutation.mutate({ priority: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -142,7 +160,7 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
                 <PriorityBadge priority={task.priority} />
               </div>
               <div className="space-y-2">
-                <Label>Column</Label>
+                <Label>Status</Label>
                 <Select
                   defaultValue={task.columnId}
                   onValueChange={(v) => updateMutation.mutate({ columnId: v })}
@@ -165,8 +183,10 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
               <Label>Due date</Label>
               <Input
                 type="date"
+                disabled={!isOwner}
                 defaultValue={task.dueDate ? task.dueDate.slice(0, 10) : ''}
                 onChange={(e) =>
+                  isOwner &&
                   updateMutation.mutate({
                     dueDate: e.target.value ? new Date(e.target.value).toISOString() : null,
                   })
@@ -180,16 +200,20 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
                 <UserPlus className="h-4 w-4 text-primary" />
                 <Label className="text-primary">Assign to someone</Label>
               </div>
-              <p className="text-xs text-[var(--muted)]">Click a person to assign this task</p>
+              <p className="text-xs text-[var(--muted)]">
+                {isOwner ? 'Click a person to assign this task' : 'Only the project owner can change assignee'}
+              </p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => updateMutation.mutate({ assigneeId: null })}
+                  disabled={!isOwner}
+                  onClick={() => isOwner && updateMutation.mutate({ assigneeId: null })}
                   className={cn(
                     'rounded-full border px-3 py-1.5 text-sm transition-colors',
                     !task.assigneeId
                       ? 'border-primary bg-primary text-white'
-                      : 'border-[var(--border)] hover:border-primary/50'
+                      : 'border-[var(--border)] hover:border-primary/50',
+                    !isOwner && 'cursor-not-allowed opacity-70'
                   )}
                 >
                   Unassigned
@@ -198,12 +222,14 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
                   <button
                     type="button"
                     key={u.id}
-                    onClick={() => updateMutation.mutate({ assigneeId: u.id })}
+                    disabled={!isOwner}
+                    onClick={() => isOwner && updateMutation.mutate({ assigneeId: u.id })}
                     className={cn(
                       'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors',
                       task.assigneeId === u.id
                         ? 'border-primary bg-primary text-white'
-                        : 'border-[var(--border)] hover:border-primary/50'
+                        : 'border-[var(--border)] hover:border-primary/50',
+                      !isOwner && 'cursor-not-allowed opacity-70'
                     )}
                   >
                     <UserAvatar name={u.name} src={u.avatarUrl} className="h-6 w-6" />

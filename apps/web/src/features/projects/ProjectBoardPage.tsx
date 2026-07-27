@@ -17,7 +17,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ArrowLeft, Plus, GripVertical, Loader2, UserPlus } from 'lucide-react';
 import api, { getErrorMessage } from '@/services/api';
 import { joinProjectRoom, leaveProjectRoom, getSocket } from '@/services/socket';
-import { useCurrentWorkspace } from '@/store/auth-store';
+import { useCurrentWorkspace, useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -119,6 +119,7 @@ export function ProjectBoardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const workspace = useCurrentWorkspace();
+  const user = useAuthStore((s) => s.user);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const selectedTaskId = searchParams.get('task');
 
@@ -139,6 +140,8 @@ export function ProjectBoardPage() {
     },
     enabled: !!projectId,
   });
+
+  const isOwner = !!user && !!project && project.ownerId === user.id;
 
   const { data: workspaceMembers = [] } = useQuery({
     queryKey: ['workspace-members', workspace?.id],
@@ -192,8 +195,9 @@ export function ProjectBoardPage() {
         title: newTitle.trim(),
         description: newDescription.trim() || undefined,
         columnId: addColumnId,
-        priority: newPriority,
-        assigneeId: newAssigneeId,
+        ...(isOwner
+          ? { priority: newPriority, assigneeId: newAssigneeId }
+          : { priority: 'MEDIUM' }),
       });
       await queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       setAddOpen(false);
@@ -318,73 +322,77 @@ export function ProjectBoardPage() {
                 rows={3}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select value={newPriority} onValueChange={setNewPriority}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isOwner && (
+              <>
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <Select value={newPriority} onValueChange={setNewPriority}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-3 rounded-[12px] border border-primary/30 bg-primary/5 p-4">
-              <div className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-primary" />
-                <Label className="text-primary">Assign to someone</Label>
-              </div>
-              <p className="text-xs text-[var(--muted)]">Click a person below to assign this task</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setNewAssigneeId(null)}
-                  className={cn(
-                    'rounded-full border px-3 py-1.5 text-sm transition-colors',
-                    newAssigneeId === null
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-[var(--border)] hover:border-primary/50'
+                <div className="space-y-3 rounded-[12px] border border-primary/30 bg-primary/5 p-4">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4 text-primary" />
+                    <Label className="text-primary">Assign to someone</Label>
+                  </div>
+                  <p className="text-xs text-[var(--muted)]">Click a person below to assign this task</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewAssigneeId(null)}
+                      className={cn(
+                        'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                        newAssigneeId === null
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-[var(--border)] hover:border-primary/50'
+                      )}
+                    >
+                      Unassigned
+                    </button>
+                    {assignees.map((u) => (
+                      <button
+                        type="button"
+                        key={u.id}
+                        onClick={() => setNewAssigneeId(u.id)}
+                        className={cn(
+                          'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors',
+                          newAssigneeId === u.id
+                            ? 'border-primary bg-primary text-white'
+                            : 'border-[var(--border)] hover:border-primary/50'
+                        )}
+                      >
+                        <UserAvatar
+                          name={u.name}
+                          src={u.avatarUrl}
+                          className={cn('h-6 w-6', newAssigneeId === u.id && 'ring-2 ring-white/40')}
+                        />
+                        {u.name}
+                      </button>
+                    ))}
+                  </div>
+                  {assignees.length === 0 && (
+                    <p className="text-xs text-amber-500">
+                      No teammates yet - invite people from the Team page first.
+                    </p>
                   )}
-                >
-                  Unassigned
-                </button>
-                {assignees.map((u) => (
-                  <button
-                    type="button"
-                    key={u.id}
-                    onClick={() => setNewAssigneeId(u.id)}
-                    className={cn(
-                      'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors',
-                      newAssigneeId === u.id
-                        ? 'border-primary bg-primary text-white'
-                        : 'border-[var(--border)] hover:border-primary/50'
-                    )}
-                  >
-                    <UserAvatar
-                      name={u.name}
-                      src={u.avatarUrl}
-                      className={cn('h-6 w-6', newAssigneeId === u.id && 'ring-2 ring-white/40')}
-                    />
-                    {u.name}
-                  </button>
-                ))}
-              </div>
-              {assignees.length === 0 && (
-                <p className="text-xs text-amber-500">
-                  No teammates yet - invite people from the Team page first.
-                </p>
-              )}
-              {newAssigneeId && (
-                <p className="text-xs text-primary">
-                  Assigned to {assignees.find((u) => u.id === newAssigneeId)?.name}
-                </p>
-              )}
-            </div>
+                  {newAssigneeId && (
+                    <p className="text-xs text-primary">
+                      Assigned to {assignees.find((u) => u.id === newAssigneeId)?.name}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             {addError && <p className="text-sm text-red-500">{addError}</p>}
             <Button type="submit" className="w-full" disabled={!newTitle.trim() || adding}>

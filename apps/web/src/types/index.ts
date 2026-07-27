@@ -20,11 +20,13 @@ export type Project = {
   status: string;
   deadline?: string | null;
   workspaceId: string;
+  ownerId: string;
   progress?: number;
   taskCount?: number;
   completedCount?: number;
   members?: Array<{ user: User }>;
   columns?: BoardColumn[];
+  owner?: User;
 };
 
 export type BoardColumn = {

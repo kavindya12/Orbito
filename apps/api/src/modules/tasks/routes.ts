@@ -9,11 +9,35 @@ import { emitToProject } from '../../lib/socket';
 const router = Router();
 router.use(requireAuth);
 
+/** Fields non-owners may change (status via column, like Jira/Asana drawer + board). */
+const MEMBER_STATUS_FIELDS = new Set(['columnId']);
+
 async function assertProjectAccess(projectId: string, userId: string) {
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) throw new AppError('Project not found', 404);
   await requireWorkspaceMember(project.workspaceId, userId);
   return project;
+}
+
+function isProjectOwner(project: { ownerId: string }, userId: string) {
+  return project.ownerId === userId;
+}
+
+function assertOwnerOrStatusOnly(
+  project: { ownerId: string },
+  userId: string,
+  body: Record<string, unknown>
+) {
+  if (isProjectOwner(project, userId)) return;
+  const keys = Object.keys(body).filter((k) => body[k] !== undefined);
+  const forbidden = keys.filter((k) => !MEMBER_STATUS_FIELDS.has(k));
+  if (forbidden.length) {
+    throw new AppError(
+      'Only the project owner can edit task details. Members can change status only.',
+      403,
+      'FORBIDDEN'
+    );
+  }
 }
 
 const taskInclude = {
@@ -33,9 +57,26 @@ router.post(
   '/project/:projectId',
   validateBody(createTaskSchema),
   asyncHandler(async (req, res) => {
-    await assertProjectAccess(req.params.projectId, req.user!.id);
+    const project = await assertProjectAccess(req.params.projectId, req.user!.id);
     const { title, description, columnId, priority, assigneeId, dueDate, estimateHours, dependencyIds } =
       req.body;
+
+    const owner = isProjectOwner(project, req.user!.id);
+    if (!owner) {
+      const tryingRestricted =
+        (assigneeId != null && assigneeId !== '') ||
+        (priority && priority !== 'MEDIUM') ||
+        dueDate ||
+        estimateHours != null ||
+        (dependencyIds && dependencyIds.length > 0);
+      if (tryingRestricted) {
+        throw new AppError(
+          'Only the project owner can set assignee, priority, and schedule when creating a task',
+          403,
+          'FORBIDDEN'
+        );
+      }
+    }
 
     const column = await prisma.boardColumn.findFirst({
       where: { id: columnId, projectId: req.params.projectId },
@@ -53,16 +94,17 @@ router.post(
         columnId,
         title,
         description,
-        priority,
-        assigneeId: assigneeId || null,
+        priority: owner ? priority : 'MEDIUM',
+        assigneeId: owner ? assigneeId || null : null,
         creatorId: req.user!.id,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        estimateHours: estimateHours ?? null,
+        dueDate: owner && dueDate ? new Date(dueDate) : null,
+        estimateHours: owner ? (estimateHours ?? null) : null,
         position: (max._max.position ?? -1) + 1,
         completedAt: column.name.toLowerCase() === 'done' ? new Date() : null,
-        dependsOn: dependencyIds?.length
-          ? { create: dependencyIds.map((dependsOnId: string) => ({ dependsOnId })) }
-          : undefined,
+        dependsOn:
+          owner && dependencyIds?.length
+            ? { create: dependencyIds.map((dependsOnId: string) => ({ dependsOnId })) }
+            : undefined,
       },
       include: taskInclude,
     });
@@ -74,9 +116,9 @@ router.post(
       action: `created task "${title}"`,
     });
 
-    if (assigneeId && assigneeId !== req.user!.id) {
+    if (task.assigneeId && task.assigneeId !== req.user!.id) {
       await createNotification({
-        userId: assigneeId,
+        userId: task.assigneeId,
         type: 'TASK_ASSIGNED',
         title: 'New task assigned',
         message: `You were assigned "${title}"`,
@@ -120,7 +162,9 @@ router.patch(
   asyncHandler(async (req, res) => {
     const existing = await prisma.task.findUnique({ where: { id: req.params.taskId } });
     if (!existing) throw new AppError('Task not found', 404);
-    await assertProjectAccess(existing.projectId, req.user!.id);
+    const project = await assertProjectAccess(existing.projectId, req.user!.id);
+
+    assertOwnerOrStatusOnly(project, req.user!.id, req.body);
 
     const { dueDate, dependencyIds, columnId, ...rest } = req.body;
     let completedAt = existing.completedAt;
@@ -131,7 +175,7 @@ router.patch(
       completedAt = column.name.toLowerCase() === 'done' ? new Date() : null;
     }
 
-    if (dependencyIds) {
+    if (dependencyIds && isProjectOwner(project, req.user!.id)) {
       await prisma.taskDependency.deleteMany({ where: { taskId: existing.id } });
       if (dependencyIds.length) {
         await prisma.taskDependency.createMany({
@@ -248,7 +292,10 @@ router.delete(
   asyncHandler(async (req, res) => {
     const existing = await prisma.task.findUnique({ where: { id: req.params.taskId } });
     if (!existing) throw new AppError('Task not found', 404);
-    await assertProjectAccess(existing.projectId, req.user!.id);
+    const project = await assertProjectAccess(existing.projectId, req.user!.id);
+    if (!isProjectOwner(project, req.user!.id)) {
+      throw new AppError('Only the project owner can delete tasks', 403, 'FORBIDDEN');
+    }
     await prisma.task.delete({ where: { id: existing.id } });
     try {
       emitToProject(existing.projectId, 'task:deleted', { id: existing.id });

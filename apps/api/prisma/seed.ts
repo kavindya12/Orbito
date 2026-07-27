@@ -59,6 +59,7 @@ async function main() {
     project = await prisma.project.create({
       data: {
         workspaceId: workspace.id,
+        ownerId: kavindya.id,
         name: 'MediEase Healthcare System',
         description: 'AI-based EHR Platform',
         deadline: new Date('2026-12-30'),

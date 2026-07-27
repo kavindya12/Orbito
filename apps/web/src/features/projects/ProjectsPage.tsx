@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Plus, FolderKanban, Trash2, Pencil, Loader2, ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import api, { getErrorMessage } from '@/services/api';
-import { useCurrentWorkspace } from '@/store/auth-store';
+import { useCurrentWorkspace, useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import type { Project } from '@/types';
 
 export function ProjectsPage() {
   const workspace = useCurrentWorkspace();
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -205,30 +206,34 @@ export function ProjectsPage() {
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
                     >
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Edit project"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditing(project);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4 text-primary" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Delete project"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Delete "${project.name}"?`)) {
-                            deleteMutation.mutate(project.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      {user?.id === project.ownerId && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Edit project"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditing(project);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Delete project"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete "${project.name}"?`)) {
+                                deleteMutation.mutate(project.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
