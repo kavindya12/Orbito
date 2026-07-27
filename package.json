@@ -1,0 +1,24 @@
+{
+  "name": "orbito",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:web": "npm run dev -w @orbito/web",
+    "dev:api": "npm run dev -w @orbito/api",
+    "build": "npm run build --workspaces --if-present",
+    "db:generate": "npm run db:generate -w @orbito/api",
+    "db:migrate": "npm run db:migrate -w @orbito/api",
+    "db:push": "npm run db:push -w @orbito/api",
+    "db:seed": "npm run db:seed -w @orbito/api"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "esbuild": "0.25.12"
+  }
+}
