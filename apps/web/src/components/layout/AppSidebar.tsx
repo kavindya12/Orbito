@@ -52,42 +52,40 @@ export function AppSidebar() {
       )}
       <aside
         className={cn(
-          'relative z-50 flex flex-col border-r border-[var(--border)]/80 bg-[var(--card)]/95 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-[width] duration-300 ease-out',
-          'fixed inset-y-0 left-0 lg:static lg:translate-x-0',
-          collapsed ? 'w-[76px]' : 'w-64',
+          'z-50 flex h-dvh shrink-0 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] transition-[width] duration-300 ease-out',
+          'fixed inset-y-0 left-0 lg:sticky lg:top-0 lg:translate-x-0',
+          collapsed ? 'w-[76px]' : 'w-[260px]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         <div
           className={cn(
-            'flex h-16 items-center gap-3 border-b border-[var(--border)]/70 px-4',
+            'flex h-[72px] items-center gap-3 px-5',
             collapsed && 'justify-center px-2'
           )}
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/25">
-            <OrbitoLogo size={22} />
-          </div>
+          <OrbitoLogo size={28} />
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-base font-bold tracking-tight">Orbito</p>
-              <p className="truncate text-[11px] text-[var(--muted)]">Keep projects in orbit</p>
+              <p className="truncate text-[17px] font-bold tracking-tight text-white">Orbito</p>
+              <p className="truncate text-[11px] text-slate-400">Keep projects in orbit</p>
             </div>
           )}
         </div>
 
         {!collapsed && workspaces.length > 0 && (
-          <div className="border-b border-[var(--border)]/70 p-3">
-            <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          <div className="px-4 pb-4">
+            <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Workspace
             </p>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="h-10 w-full justify-between rounded-xl border-[var(--border)]/80 bg-[var(--background)]/50 text-left font-normal hover:bg-[var(--background)]"
+                  className="h-11 w-full justify-between rounded-2xl border-white/10 bg-white/5 text-left font-medium text-slate-100 hover:bg-white/10 hover:text-white"
                 >
                   <span className="truncate">{current?.name ?? 'Workspace'}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
@@ -103,9 +101,9 @@ export function AppSidebar() {
           </div>
         )}
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-3">
           {!collapsed && (
-            <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+            <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Menu
             </p>
           )}
@@ -118,11 +116,11 @@ export function AppSidebar() {
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors',
                   collapsed && 'justify-center px-2',
                   isActive
-                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                    : 'text-[var(--muted)] hover:bg-[var(--background)] hover:text-[var(--text)]'
+                    ? 'ai-gradient text-white shadow-lg shadow-primary/30'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
                 )
               }
             >
@@ -133,21 +131,16 @@ export function AppSidebar() {
         </nav>
 
         <div className="hidden p-3 lg:block">
-          <div className="mb-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
           <button
             type="button"
             onClick={toggleCollapsed}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
-              'group flex w-full items-center gap-3 rounded-xl border border-[var(--border)]/80 bg-[var(--background)]/70 px-3 py-2.5 text-sm font-medium text-[var(--muted)] shadow-sm transition-all duration-200',
-              'hover:border-primary/40 hover:bg-primary/10 hover:text-primary hover:shadow-md hover:shadow-primary/10',
-              'active:scale-[0.98]',
+              'flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/10 hover:text-slate-100',
               collapsed && 'justify-center px-2'
             )}
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--card)] ring-1 ring-[var(--border)] transition-all duration-200 group-hover:scale-105 group-hover:bg-primary/15 group-hover:ring-primary/35 group-hover:text-primary">
-              {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </span>
+            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
             {!collapsed && <span>Collapse</span>}
           </button>
         </div>

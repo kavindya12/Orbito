@@ -5,9 +5,14 @@ import { verifyAccessToken } from './auth';
 let io: Server | null = null;
 
 export function initSocket(httpServer: HttpServer) {
+  const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+      origin: corsOrigins,
       credentials: true,
     },
   });

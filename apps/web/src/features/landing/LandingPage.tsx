@@ -13,7 +13,7 @@ const features = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text)]">
+    <div className="h-dvh overflow-y-auto bg-[var(--background)] text-[var(--text)]">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2">

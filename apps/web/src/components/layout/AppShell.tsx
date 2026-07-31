@@ -1,5 +1,4 @@
 import { Outlet, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
@@ -29,20 +28,14 @@ export function AppShell() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
+    <div className="flex h-dvh max-h-dvh overflow-hidden bg-[var(--background)]">
       <AppSidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-16 lg:pb-0">
         <AppHeader title={getTitle(location.pathname)} onSearchOpen={() => setSearchOpen(true)} />
-        <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-scroll p-4 lg:p-6">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.15 }}
-            className="min-h-0"
-          >
+        <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
+          <div key={location.pathname} className="min-h-0">
             <Outlet />
-          </motion.div>
+          </div>
         </main>
         <MobileNav />
       </div>

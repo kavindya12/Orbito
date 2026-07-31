@@ -35,7 +35,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] p-4">
+    <div className="flex h-dvh items-center justify-center overflow-y-auto bg-[var(--background)] p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-2">
           <OrbitoLogo size={40} />

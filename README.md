@@ -30,10 +30,12 @@ npm run dev:api
 npm run dev:web
 ```
 
-- App: http://localhost:5173  
-- API: http://localhost:4000/api/health  
+- App: http://localhost:5173 (or next free port, e.g. 5174)
+- API: http://localhost:4000/api/health
 
 **Demo login:** `kavindya@orbito.dev` / `password123`
+
+Also seeded: `john@orbito.dev` / `sarah@orbito.dev` (same password).
 
 ## Features
 

@@ -30,7 +30,7 @@ export function AppHeader({ title, onSearchOpen }: AppHeaderProps) {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--border)] bg-[var(--background)]/80 px-4 backdrop-blur-md lg:px-6">
+    <header className="sticky top-0 z-30 flex h-[72px] items-center gap-4 border-b border-[var(--border)] bg-[var(--background)]/90 px-4 backdrop-blur-md lg:px-6">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
         <Menu className="h-5 w-5" />
       </Button>
@@ -38,33 +38,40 @@ export function AppHeader({ title, onSearchOpen }: AppHeaderProps) {
         <OrbitoLogo size={24} />
         <span className="font-semibold">Orbito</span>
       </div>
+
       {title && (
-        <div className="hidden lg:block">
-          <h1 className="text-lg font-semibold">{title}</h1>
+        <div className="hidden min-w-0 lg:block">
+          <h1 className="truncate text-xl font-semibold tracking-tight">{title}</h1>
           {user && (
-            <p className="text-xs text-[var(--muted)]">
+            <p className="truncate text-sm text-[var(--muted)]">
               {greeting()} {user.name}
             </p>
           )}
         </div>
       )}
 
-      <div className="ml-auto flex items-center gap-2">
-        <Button variant="outline" size="sm" className="hidden gap-2 md:flex" onClick={onSearchOpen}>
+      <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          onClick={onSearchOpen}
+          className="hidden h-10 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-4 text-sm text-[var(--muted)] transition-colors hover:border-primary/40 hover:text-[var(--text)] md:flex"
+        >
           <Search className="h-4 w-4" />
-          <span className="text-[var(--muted)]">Search...</span>
-          <kbd className="ml-4 rounded border border-[var(--border)] px-1.5 py-0.5 text-xs text-[var(--muted)]">⌘K</kbd>
-        </Button>
+          <span>Search...</span>
+          <kbd className="ml-6 rounded-md border border-[var(--border)] bg-[var(--background)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted)]">
+            ⌘K
+          </kbd>
+        </button>
         <Button variant="ghost" size="icon" className="md:hidden" onClick={onSearchOpen}>
           <Search className="h-5 w-5" />
         </Button>
         <NotificationBell />
-        <Button variant="ghost" size="icon" onClick={toggleTheme}>
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="rounded-full outline-none ring-primary/50 focus-visible:ring-2">
+            <button className="rounded-full outline-none ring-primary/40 focus-visible:ring-2">
               <UserAvatar name={user?.name ?? 'User'} src={user?.avatarUrl} />
             </button>
           </DropdownMenuTrigger>
