@@ -61,3 +61,16 @@ Also seeded: `john@orbito.dev` / `sarah@orbito.dev` (same password).
 See [`.env.example`](.env.example). Dev defaults: `apps/api/.env`, `apps/web/.env`.
 
 Optional: `OPENAI_API_KEY`, Cloudinary credentials.
+
+## Deploy (Vercel)
+
+This monorepo deploys the **web** app as a Vite SPA.
+
+1. Import `kavindya12/Orbito` on Vercel
+2. Keep **Root Directory** as the repo root (do not set `apps/web`)
+3. Framework should be **Vite** (set by `vercel.json`)
+4. Add env vars for the frontend:
+   - `VITE_API_URL` = your API base URL ending in `/api` (e.g. `https://your-api.example.com/api`)
+   - `VITE_SOCKET_URL` = your API origin (e.g. `https://your-api.example.com`)
+
+The Express API (`apps/api`) is not deployed by this Vercel config - host it separately (Railway, Render, Fly, etc.).
