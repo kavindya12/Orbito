@@ -61,7 +61,13 @@ api.interceptors.response.use(
 export function getErrorMessage(err: unknown) {
   if (axios.isAxiosError(err)) {
     if (err.code === 'ECONNABORTED') return 'Request timed out. Is the API running?';
-    if (!err.response) return 'Cannot reach API. Check that the backend is running on port 4000.';
+    if (!err.response) {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+      if (String(apiUrl).includes('localhost')) {
+        return 'Cannot reach API. Start the backend locally (npm run dev:api) or set VITE_API_URL on Vercel to your Render URL.';
+      }
+      return `Cannot reach API at ${apiUrl}. Check Render is online (/api/health) and CORS_ORIGIN includes this site.`;
+    }
     return (err.response?.data as { message?: string })?.message || err.message;
   }
   if (err instanceof Error) return err.message;
