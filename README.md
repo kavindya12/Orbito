@@ -1,9 +1,29 @@
 # Orbito
 
-AI-powered collaborative project management.  
-**Keep every project in orbit.**
+**AI-powered collaborative project management.**  
+Keep every project in orbit.
 
 Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real time, and use AI to break down work, prioritize tasks, and check project health.
+
+**Repo:** [github.com/kavindya12/Orbito](https://github.com/kavindya12/Orbito)
+
+---
+
+## Features
+
+| Feature | What it does |
+|---------|----------------|
+| **My Tasks** | Personal view of everything assigned to you |
+| **Workspaces** | Register, log in, invite teammates |
+| **Projects & Kanban** | Create projects and drag tasks across columns |
+| **Permissions** | Members can change task status; only the project owner can fully edit or delete |
+| **Dashboard** | Active projects, deadlines, activity, and a **Productivity Trend** chart (last 14 days) |
+| **Collaboration** | Comments, mentions, attachments, live notifications |
+| **Calendar & team** | Month / week / day views and member performance |
+| **Reports** | Progress, workload, and completion charts |
+| **Search** | `Ctrl` / `Cmd` + `K` across tasks, projects, and people |
+| **AI Assistant** | Task breakdown, priority tips, project health (OpenAI or built-in fallback) |
+| **Themes** | Dark by default; light mode in Settings |
 
 ---
 
@@ -11,15 +31,25 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query, Zustand |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query, Zustand, Recharts |
 | Backend | Node.js, Express, Prisma, JWT, Socket.IO |
 | Shared | Zod schemas (`@orbito/shared`) |
 | Database (local) | SQLite |
 | Database (production) | PostgreSQL |
 
+**Monorepo layout**
+
+| Package | Path | Purpose |
+|---------|------|---------|
+| `@orbito/web` | `apps/web` | React frontend |
+| `@orbito/api` | `apps/api` | Express API + Prisma |
+| `@orbito/shared` | `packages/shared` | Shared Zod schemas & types |
+
 ---
 
 ## Quick start
+
+**Requirements:** Node.js 20+
 
 ### 1. Install dependencies
 
@@ -30,96 +60,114 @@ npm install --legacy-peer-deps
 ### 2. Configure environment
 
 ```bash
-# API
+# Windows
 copy .env.example apps\api\.env
 
-# Frontend (create apps/web/.env with only these two lines)
-# VITE_API_URL=http://localhost:4000/api
-# VITE_SOCKET_URL=http://localhost:4000
+# macOS / Linux
+cp .env.example apps/api/.env
 ```
 
-On macOS/Linux use `cp` instead of `copy`. See [`.env.example`](.env.example) for every variable explained.
+Create `apps/web/.env` with:
+
+```env
+VITE_API_URL=http://localhost:4000/api
+VITE_SOCKET_URL=http://localhost:4000
+```
+
+See [`.env.example`](.env.example) for every variable (JWT, CORS, Cloudinary, OpenAI).
 
 ### 3. Set up the database
 
 ```bash
 npm run build -w @orbito/shared
-npm run db:push -w @orbito/api
-npm run db:generate -w @orbito/api
-npm run db:seed -w @orbito/api
+npm run db:push
+npm run db:generate
+npm run db:seed
 ```
 
 ### 4. Run the app
 
-Open two terminals:
-
 ```bash
 # Terminal 1 – API
 npm run dev:api
-```
 
-```bash
 # Terminal 2 – Web
 npm run dev:web
 ```
 
 | Service | URL |
 |---------|-----|
-| Web app | http://localhost:5173 (or 5174 if 5173 is busy) |
+| Web app | http://localhost:5173 (or **5174** if 5173 is busy) |
 | API health | http://localhost:4000/api/health |
 
-### Demo accounts
+---
+
+## Demo accounts
+
+After `npm run db:seed`:
 
 | Email | Password | Role |
 |-------|----------|------|
 | `kavindya@orbito.dev` | `password123` | Workspace owner |
 | `john@orbito.dev` | `password123` | Member |
 | `sarah@orbito.dev` | `password123` | Admin |
-| `tester@orbito.dev` | `password123` | Member (My Tasks test user) |
 
-After seeding, create the My Tasks tester (assigns 3 sample tasks):
+**My Tasks tester** (3 assigned sample tasks):
 
 ```bash
 npm run create:tester
 npm run test:my-tasks
 ```
 
----
+| Email | Password |
+|-------|----------|
+| `tester@orbito.dev` | `password123` |
 
-## What you can do
+**Optional — fill Productivity Trend with demo completions:**
 
-- **My Tasks** – Each member sees only work assigned to them
-- **Auth & workspaces** – Register, log in, invite teammates
-- **Projects & Kanban** – Create projects, drag tasks across columns
-- **Collaboration** – Comments, mentions, file attachments, live notifications
-- **Calendar & team** – Month/week/day views and member performance
-- **Reports** – Charts for progress, workload, and completion
-- **Search** – `Ctrl` / `Cmd` + `K` across tasks, projects, and people
-- **AI Assistant** – Task breakdown, priority suggestions, project health (OpenAI or built-in fallback)
-- **Themes** – Dark by default, light mode available in Settings
+```bash
+npm run backfill:productivity -w @orbito/api
+```
 
 ---
 
-## Project structure
+## Useful scripts
 
-| Package | Path | Purpose |
-|---------|------|---------|
-| `@orbito/web` | `apps/web` | React frontend |
-| `@orbito/api` | `apps/api` | Express API + Prisma |
-| `@orbito/shared` | `packages/shared` | Shared Zod schemas & types |
+| Command | Description |
+|---------|-------------|
+| `npm run dev:api` | Start API (watch mode) |
+| `npm run dev:web` | Start Vite frontend |
+| `npm run build:web` | Build shared + web (used by Vercel) |
+| `npm run db:push` | Push Prisma schema to the DB |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:seed` | Seed demo workspace, project, and users |
+| `npm run create:tester` | Create `tester@orbito.dev` with assigned tasks |
+| `npm run test:my-tasks` | Smoke-test My Tasks API |
 
 ---
 
 ## Environment variables
 
-Full reference: [`.env.example`](.env.example).
-
 | Area | Required? | Notes |
 |------|-----------|--------|
-| Database + JWT + CORS | Yes | Needed for local API |
-| `VITE_API_URL` / `VITE_SOCKET_URL` | Yes | Needed for the frontend |
-| Cloudinary | No | Falls back to local `/uploads` |
+| `DATABASE_URL`, JWT secrets, `CORS_ORIGIN`, `PORT` | Yes | API (`apps/api/.env`) |
+| `VITE_API_URL`, `VITE_SOCKET_URL` | Yes | Frontend (`apps/web/.env`) |
+| Cloudinary | No | Falls back to local `apps/api/uploads` |
 | OpenAI | No | Falls back to heuristic AI |
+
+For local Vite on port **5174**, keep both origins in `CORS_ORIGIN`:
+
+```env
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174
+```
+
+---
+
+## Permissions (quick reference)
+
+- **Project owner** — user who created the project (`ownerId`)
+- **Members** — view the board and change task **status** (column / drag)
+- **Owner only** — full task edit (assignee, priority, etc.), delete tasks, edit/delete the project
 
 ---
 
@@ -127,13 +175,24 @@ Full reference: [`.env.example`](.env.example).
 
 ### Frontend (Vercel)
 
-1. Import the `kavindya12/Orbito` repository
-2. Leave **Root Directory** empty (repo root — do not set `apps/web`)
-3. Framework preset: **Other** (configured in `vercel.json`)
-4. Set:
-   - `VITE_API_URL` → your live API URL ending with `/api`
-   - `VITE_SOCKET_URL` → your live API origin
+1. Import [kavindya12/Orbito](https://github.com/kavindya12/Orbito)
+2. Leave **Root Directory** empty (repo root — do **not** set `apps/web`)
+3. Framework preset: **Other** (`vercel.json` sets `framework: null`)
+4. Env vars:
+   - `VITE_API_URL` → live API URL ending with `/api`
+   - `VITE_SOCKET_URL` → live API origin (no `/api`)
 
 ### Backend (API)
 
-Deploy `apps/api` separately (Railway, Render, Fly.io, etc.) with a PostgreSQL `DATABASE_URL` and strong JWT secrets.
+Deploy `apps/api` on Railway, Render, Fly.io, etc. with:
+
+- PostgreSQL `DATABASE_URL`
+- Strong `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`
+- `CORS_ORIGIN` set to your Vercel URL
+- `CLIENT_URL` set to your frontend URL
+
+---
+
+## License
+
+Private / personal project unless otherwise stated.
