@@ -181,7 +181,6 @@ router.patch(
             .filter((userId: string) => userId !== existing.ownerId)
             .map((userId: string) => ({ projectId: project.id, userId })),
         ],
-        skipDuplicates: true,
       });
     }
 

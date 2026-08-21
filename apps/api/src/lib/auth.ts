@@ -21,15 +21,19 @@ const accessSecret = () => process.env.JWT_ACCESS_SECRET || 'dev-access-secret';
 const refreshSecret = () => process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret';
 
 export function signAccessToken(user: AuthUser) {
-  return jwt.sign({ sub: user.id, email: user.email, name: user.name }, accessSecret(), {
-    expiresIn: process.env.JWT_ACCESS_EXPIRES || '15m',
-  });
+  return jwt.sign(
+    { sub: user.id, email: user.email, name: user.name },
+    accessSecret(),
+    { expiresIn: (process.env.JWT_ACCESS_EXPIRES || '15m') as jwt.SignOptions['expiresIn'] }
+  );
 }
 
 export function signRefreshToken(userId: string) {
-  return jwt.sign({ sub: userId }, refreshSecret(), {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES || '7d',
-  });
+  return jwt.sign(
+    { sub: userId },
+    refreshSecret(),
+    { expiresIn: (process.env.JWT_REFRESH_EXPIRES || '7d') as jwt.SignOptions['expiresIn'] }
+  );
 }
 
 export function verifyAccessToken(token: string): AuthUser {

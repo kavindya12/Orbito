@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { emitToUser } from './socket';
 
 export async function createNotification(input: {
@@ -31,7 +31,7 @@ export async function logActivity(input: {
       action: input.action,
       projectId: input.projectId,
       taskId: input.taskId,
-      metadata: input.metadata ?? undefined,
+      metadata: (input.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
     },
   });
 }
