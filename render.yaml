@@ -1,0 +1,44 @@
+# Orbito API on Render (Web Service + PostgreSQL)
+# Dashboard: New → Blueprint → connect this repo → apply
+
+databases:
+  - name: orbito-db
+    plan: free
+
+services:
+  - type: web
+    name: orbito-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: .
+    buildCommand: npm install --legacy-peer-deps && npm run build -w @orbito/shared && npm run build -w @orbito/api && npm run db:push -w @orbito/api
+    startCommand: npm run start -w @orbito/api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: orbito-db
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES
+        value: 2h
+      - key: JWT_REFRESH_EXPIRES
+        value: 7d
+      - key: CLIENT_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

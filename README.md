@@ -34,8 +34,8 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query, Zustand, Recharts |
 | Backend | Node.js, Express, Prisma, JWT, Socket.IO |
 | Shared | Zod schemas (`@orbito/shared`) |
-| Database (local) | SQLite |
-| Database (production) | PostgreSQL |
+| Database (local) | PostgreSQL (Docker Compose) |
+| Database (production) | PostgreSQL (Render) |
 
 **Monorepo layout**
 
@@ -49,7 +49,7 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 
 ## Quick start
 
-**Requirements:** Node.js 20+
+**Requirements:** Node.js 20+, Docker (for local Postgres)
 
 ### 1. Install dependencies
 
@@ -57,7 +57,11 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 npm install --legacy-peer-deps
 ```
 
-### 2. Configure environment
+### 2. Start Postgres + configure environment
+
+```bash
+docker compose up -d
+```
 
 ```bash
 # Windows
@@ -73,8 +77,6 @@ Create `apps/web/.env` with:
 VITE_API_URL=http://localhost:4000/api
 VITE_SOCKET_URL=http://localhost:4000
 ```
-
-See [`.env.example`](.env.example) for every variable (JWT, CORS, Cloudinary, OpenAI).
 
 ### 3. Set up the database
 
@@ -173,23 +175,43 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:5174
 
 ## Deploy
 
+### Backend (Render) — do this first
+
+Repo includes [`render.yaml`](render.yaml).
+
+1. Go to [render.com](https://render.com) → **New** → **Blueprint**
+2. Connect `kavindya12/Orbito`
+3. Apply the Blueprint (creates **orbito-api** + **orbito-db** Postgres)
+4. In the **orbito-api** service → **Environment**, set:
+
+```env
+CLIENT_URL=https://YOUR-VERCEL-APP.vercel.app
+CORS_ORIGIN=https://YOUR-VERCEL-APP.vercel.app,https://YOUR-VERCEL-APP.vercel.app
+```
+
+(Add your staging domain too if you use one, comma-separated.)
+
+5. Deploy, then open: `https://YOUR-API.onrender.com/api/health`  
+   You should see `{ "ok": true, "service": "orbito-api" }`
+
+6. Seed demo users (Render Shell on the API service):
+
+```bash
+npm run db:seed -w @orbito/api
+```
+
 ### Frontend (Vercel)
 
 1. Import [kavindya12/Orbito](https://github.com/kavindya12/Orbito)
-2. Leave **Root Directory** empty (repo root — do **not** set `apps/web`)
-3. Framework preset: **Other** (`vercel.json` sets `framework: null`)
-4. Env vars:
-   - `VITE_API_URL` → live API URL ending with `/api`
-   - `VITE_SOCKET_URL` → live API origin (no `/api`)
+2. **Root Directory** empty · Framework **Other** · Node **20.x**
+3. Env vars (Production + Staging):
 
-### Backend (API)
+```env
+VITE_API_URL=https://YOUR-API.onrender.com/api
+VITE_SOCKET_URL=https://YOUR-API.onrender.com
+```
 
-Deploy `apps/api` on Railway, Render, Fly.io, etc. with:
-
-- PostgreSQL `DATABASE_URL`
-- Strong `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`
-- `CORS_ORIGIN` set to your Vercel URL
-- `CLIENT_URL` set to your frontend URL
+4. Redeploy Vercel after the API URL is live
 
 ---
 
