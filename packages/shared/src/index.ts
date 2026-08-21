@@ -113,31 +113,3 @@ export const aiHealthSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
-export type CreateTaskInput = z.infer<typeof createTaskSchema>;
-export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
-export type TaskPriority = z.infer<typeof taskPrioritySchema>;
-
-export const WorkspaceRole = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  MEMBER: 'MEMBER',
-} as const;
-
-export const ProjectStatus = {
-  ACTIVE: 'ACTIVE',
-  ARCHIVED: 'ARCHIVED',
-  COMPLETED: 'COMPLETED',
-} as const;
-
-export const TaskPriorityEnum = {
-  LOW: 'LOW',
-  MEDIUM: 'MEDIUM',
-  HIGH: 'HIGH',
-  URGENT: 'URGENT',
-} as const;
-
-export type ApiError = {
-  message: string;
-  code?: string;
-  details?: unknown;
-};

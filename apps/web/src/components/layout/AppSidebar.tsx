@@ -10,6 +10,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
+  CheckSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OrbitoLogo } from './Logo';
@@ -27,6 +28,7 @@ import {
 
 const navItems = [
   { to: '/app', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/app/my-tasks', icon: CheckSquare, label: 'My Tasks' },
   { to: '/app/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/app/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/app/team', icon: Users, label: 'Team' },

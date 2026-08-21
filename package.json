@@ -10,10 +10,14 @@
     "dev:web": "npm run dev -w @orbito/web",
     "dev:api": "npm run dev -w @orbito/api",
     "build": "npm run build --workspaces --if-present",
+    "build:web": "npm run build -w @orbito/shared && npm run build -w @orbito/web",
+    "vercel-build": "npm run build:web",
     "db:generate": "npm run db:generate -w @orbito/api",
     "db:migrate": "npm run db:migrate -w @orbito/api",
     "db:push": "npm run db:push -w @orbito/api",
-    "db:seed": "npm run db:seed -w @orbito/api"
+    "db:seed": "npm run db:seed -w @orbito/api",
+    "create:tester": "npm run create:tester -w @orbito/api",
+    "test:my-tasks": "npm run test:my-tasks -w @orbito/api"
   },
   "engines": {
     "node": ">=20"

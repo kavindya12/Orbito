@@ -9,6 +9,7 @@ import { CalendarPage } from '@/features/calendar/CalendarPage';
 import { TeamPage } from '@/features/team/TeamPage';
 import { ReportsPage } from '@/features/reports/ReportsPage';
 import { AiAssistantPage } from '@/features/ai/AiAssistantPage';
+import { MyTasksPage } from '@/features/tasks/MyTasksPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute, PublicRoute } from './ProtectedRoute';
@@ -43,6 +44,7 @@ export function AppRouter() {
           }
         >
           <Route index element={<DashboardPage />} />
+          <Route path="my-tasks" element={<MyTasksPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:projectId" element={<ProjectBoardPage />} />
           <Route path="calendar" element={<CalendarPage />} />

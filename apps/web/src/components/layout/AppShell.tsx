@@ -7,6 +7,7 @@ import { CommandSearch } from '@/features/search/CommandSearch';
 
 const pageTitles: Record<string, string> = {
   '/app': 'Dashboard',
+  '/app/my-tasks': 'My Tasks',
   '/app/projects': 'Projects',
   '/app/calendar': 'Calendar',
   '/app/team': 'Team',

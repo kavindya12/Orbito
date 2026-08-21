@@ -18,15 +18,8 @@ type AuthState = {
   currentWorkspaceId: string | null;
   isInitialized: boolean;
   login: (user: AuthUser, accessToken: string, workspaces: Workspace[]) => void;
-  setSession: (payload: {
-    user: AuthUser;
-    accessToken: string;
-    workspaces?: Workspace[];
-    workspace?: Workspace;
-  }) => void;
   setUser: (user: AuthUser) => void;
   setAccessToken: (token: string | null) => void;
-  setWorkspaces: (workspaces: Workspace[]) => void;
   setCurrentWorkspaceId: (id: string) => void;
   initialize: () => void;
   logout: () => void;
@@ -47,23 +40,8 @@ export const useAuthStore = create<AuthState>()(
           workspaces,
           currentWorkspaceId: workspaces[0]?.id || get().currentWorkspaceId,
         }),
-      setSession: ({ user, accessToken, workspaces, workspace }) =>
-        set((state) => {
-          const list = workspaces || (workspace ? [workspace] : state.workspaces);
-          return {
-            user,
-            accessToken,
-            workspaces: list,
-            currentWorkspaceId: workspace?.id || list[0]?.id || state.currentWorkspaceId,
-          };
-        }),
       setUser: (user) => set({ user }),
       setAccessToken: (accessToken) => set({ accessToken }),
-      setWorkspaces: (workspaces) =>
-        set((state) => ({
-          workspaces,
-          currentWorkspaceId: state.currentWorkspaceId || workspaces[0]?.id || null,
-        })),
       setCurrentWorkspaceId: (currentWorkspaceId) => set({ currentWorkspaceId }),
       initialize: () => set({ isInitialized: true }),
       logout: () => {

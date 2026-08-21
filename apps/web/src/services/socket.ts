@@ -26,10 +26,6 @@ export function leaveProjectRoom(projectId: string) {
   getSocket()?.emit('leave:project', projectId);
 }
 
-export function joinWorkspaceRoom(workspaceId: string) {
-  getSocket()?.emit('join:workspace', workspaceId);
-}
-
 export function disconnectSocket() {
   socket?.disconnect();
   socket = null;

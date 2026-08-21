@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { useState } from 'react';
 import api from '@/services/api';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,15 +18,7 @@ import type { Notification } from '@/types';
 
 export function NotificationBell() {
   const queryClient = useQueryClient();
-
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: async () => {
-      const { data } = await api.get<Notification[]>('/notifications');
-      return data;
-    },
-    refetchInterval: 30000,
-  });
+  const [open, setOpen] = useState(false);
 
   const { data: unreadData } = useQuery({
     queryKey: ['notifications-unread'],
@@ -33,7 +26,18 @@ export function NotificationBell() {
       const { data } = await api.get<{ count: number }>('/notifications/unread-count');
       return data;
     },
-    refetchInterval: 30000,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const { data } = await api.get<Notification[]>('/notifications');
+      return data;
+    },
+    enabled: open,
+    staleTime: 30_000,
   });
 
   const markAllRead = useMutation({
@@ -55,7 +59,7 @@ export function NotificationBell() {
   const unread = unreadData?.count ?? 0;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />

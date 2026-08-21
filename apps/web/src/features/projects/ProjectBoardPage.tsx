@@ -139,6 +139,7 @@ export function ProjectBoardPage() {
       return data;
     },
     enabled: !!projectId,
+    staleTime: 15_000,
   });
 
   const isOwner = !!user && !!project && project.ownerId === user.id;
@@ -150,6 +151,7 @@ export function ProjectBoardPage() {
       return data.map((m) => m.user);
     },
     enabled: !!workspace?.id,
+    staleTime: 120_000,
   });
 
   const assignees =
@@ -199,8 +201,8 @@ export function ProjectBoardPage() {
           ? { priority: newPriority, assigneeId: newAssigneeId }
           : { priority: 'MEDIUM' }),
       });
-      await queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       setAddOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ['project', projectId] });
     } catch (err) {
       setAddError(getErrorMessage(err));
     } finally {
@@ -238,6 +240,8 @@ export function ProjectBoardPage() {
     try {
       await api.post(`/tasks/${taskId}/move`, { columnId, position });
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
     } catch {
       /* ignore */
     }

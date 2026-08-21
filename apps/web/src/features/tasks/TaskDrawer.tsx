@@ -46,6 +46,8 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task', taskId] });
       queryClient.invalidateQueries({ queryKey: ['project', project.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
       setError('');
     },
     onError: (err) => setError(getErrorMessage(err)),
@@ -63,6 +65,7 @@ export function TaskDrawer({ taskId, project, workspaceMembers = [], open, onClo
     mutationFn: () => api.delete(`/tasks/${taskId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', project.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       onClose();
     },
   });

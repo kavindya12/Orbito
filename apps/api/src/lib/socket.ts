@@ -33,10 +33,6 @@ export function initSocket(httpServer: HttpServer) {
     const userId = socket.data.user.id as string;
     socket.join(`user:${userId}`);
 
-    socket.on('join:workspace', (workspaceId: string) => {
-      socket.join(`workspace:${workspaceId}`);
-    });
-
     socket.on('join:project', (projectId: string) => {
       socket.join(`project:${projectId}`);
     });

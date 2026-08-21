@@ -10,52 +10,75 @@ router.get(
   '/workspace/:workspaceId',
   asyncHandler(async (req, res) => {
     await requireWorkspaceMember(req.params.workspaceId, req.user!.id);
+    const workspaceId = req.params.workspaceId;
+    const now = new Date();
 
-    const projects = await prisma.project.findMany({
-      where: { workspaceId: req.params.workspaceId, status: 'ACTIVE' },
-      include: {
-        tasks: {
-          include: { column: { select: { name: true } }, assignee: { select: { id: true, name: true } } },
+    const [projects, upcomingTasks, upcomingProjects, activities] = await Promise.all([
+      prisma.project.findMany({
+        where: { workspaceId, status: 'ACTIVE' },
+        select: {
+          id: true,
+          name: true,
+          deadline: true,
+          tasks: {
+            select: {
+              id: true,
+              completedAt: true,
+              dueDate: true,
+              column: { select: { name: true } },
+            },
+          },
         },
-      },
-    });
+      }),
+      prisma.task.findMany({
+        where: {
+          project: { workspaceId },
+          dueDate: { gte: now },
+          completedAt: null,
+        },
+        select: {
+          id: true,
+          title: true,
+          dueDate: true,
+          project: { select: { id: true, name: true } },
+          assignee: { select: { id: true, name: true } },
+        },
+        orderBy: { dueDate: 'asc' },
+        take: 8,
+      }),
+      prisma.project.findMany({
+        where: {
+          workspaceId,
+          status: 'ACTIVE',
+          deadline: { gte: now },
+        },
+        select: { id: true, name: true, deadline: true },
+        orderBy: { deadline: 'asc' },
+        take: 8,
+      }),
+      prisma.activity.findMany({
+        where: { project: { workspaceId } },
+        select: {
+          id: true,
+          action: true,
+          createdAt: true,
+          user: { select: { id: true, name: true } },
+          project: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 15,
+      }),
+    ]);
 
     const allTasks = projects.flatMap((p) => p.tasks);
-    const completed = allTasks.filter(
-      (t) => t.completedAt || t.column.name.toLowerCase() === 'done'
-    ).length;
+    const isDone = (t: { completedAt: Date | null; column: { name: string } }) =>
+      Boolean(t.completedAt) || t.column.name.toLowerCase() === 'done';
+
+    const completed = allTasks.filter(isDone).length;
     const pending = allTasks.length - completed;
     const overdue = allTasks.filter(
-      (t) =>
-        t.dueDate &&
-        t.dueDate < new Date() &&
-        !(t.completedAt || t.column.name.toLowerCase() === 'done')
+      (t) => t.dueDate && t.dueDate < now && !isDone(t)
     ).length;
-
-    const upcomingTasks = await prisma.task.findMany({
-      where: {
-        project: { workspaceId: req.params.workspaceId },
-        dueDate: { gte: new Date() },
-        completedAt: null,
-      },
-      include: {
-        project: { select: { id: true, name: true } },
-        assignee: { select: { id: true, name: true } },
-      },
-      orderBy: { dueDate: 'asc' },
-      take: 8,
-    });
-
-    const upcomingProjects = await prisma.project.findMany({
-      where: {
-        workspaceId: req.params.workspaceId,
-        status: 'ACTIVE',
-        deadline: { gte: new Date() },
-      },
-      select: { id: true, name: true, deadline: true },
-      orderBy: { deadline: 'asc' },
-      take: 8,
-    });
 
     const upcomingDeadlines = [
       ...upcomingTasks.map((t) => ({
@@ -78,43 +101,82 @@ router.get(
       .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
       .slice(0, 10);
 
-    const activities = await prisma.activity.findMany({
-      where: { project: { workspaceId: req.params.workspaceId } },
-      include: { user: { select: { id: true, name: true } }, project: { select: { id: true, name: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 15,
-    });
+    // Local calendar day key (avoid UTC shifting the chart day)
+    const dayKey = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
 
-    // Productivity: completed tasks per day for last 14 days
     const since = new Date();
-    since.setDate(since.getDate() - 13);
     since.setHours(0, 0, 0, 0);
-    const recentCompleted = allTasks.filter((t) => t.completedAt && t.completedAt >= since);
+    since.setDate(since.getDate() - 13);
+
+    // Completions in window: completedAt, or Done column updated recently without completedAt
+    const [recentByCompletedAt, recentDoneWithoutStamp, completionActivities] = await Promise.all([
+      prisma.task.findMany({
+        where: {
+          project: { workspaceId, status: 'ACTIVE' },
+          completedAt: { gte: since },
+        },
+        select: { completedAt: true },
+      }),
+      prisma.task.findMany({
+        where: {
+          project: { workspaceId, status: 'ACTIVE' },
+          completedAt: null,
+          updatedAt: { gte: since },
+          column: { name: { equals: 'Done' } },
+        },
+        select: { updatedAt: true },
+      }),
+      prisma.activity.findMany({
+        where: {
+          project: { workspaceId },
+          createdAt: { gte: since },
+          OR: [
+            { action: { contains: 'moved task to Done' } },
+            { action: { contains: 'completed' } },
+          ],
+        },
+        select: { createdAt: true },
+      }),
+    ]);
+
+    const countByDay = new Map<string, number>();
+    for (const t of recentByCompletedAt) {
+      if (!t.completedAt) continue;
+      const key = dayKey(t.completedAt);
+      countByDay.set(key, (countByDay.get(key) || 0) + 1);
+    }
+    for (const t of recentDoneWithoutStamp) {
+      const key = dayKey(t.updatedAt);
+      countByDay.set(key, (countByDay.get(key) || 0) + 1);
+    }
+    // Fill days that only have activity evidence (no task stamp)
+    for (const a of completionActivities) {
+      const key = dayKey(a.createdAt);
+      if (!countByDay.has(key)) countByDay.set(key, 1);
+    }
+
     const productivity = Array.from({ length: 14 }, (_, i) => {
       const day = new Date(since);
       day.setDate(since.getDate() + i);
-      const key = day.toISOString().slice(0, 10);
-      const count = recentCompleted.filter(
-        (t) => t.completedAt && t.completedAt.toISOString().slice(0, 10) === key
-      ).length;
-      return { date: key, completed: count };
+      const key = dayKey(day);
+      return { date: key, completed: countByDay.get(key) || 0 };
     });
-
-    const productivityScore =
-      allTasks.length === 0 ? 0 : Math.round((completed / allTasks.length) * 100);
 
     res.json({
       activeProjects: projects.length,
       taskStats: { completed, pending, overdue, total: allTasks.length },
-      productivityScore,
+      productivityScore: allTasks.length === 0 ? 0 : Math.round((completed / allTasks.length) * 100),
       productivityTrend: productivity,
       upcomingDeadlines,
       activity: activities,
       projects: projects.map((p) => {
         const total = p.tasks.length;
-        const done = p.tasks.filter(
-          (t) => t.completedAt || t.column.name.toLowerCase() === 'done'
-        ).length;
+        const done = p.tasks.filter(isDone).length;
         return {
           id: p.id,
           name: p.name,
@@ -138,14 +200,18 @@ router.get(
         workspaceId: req.params.workspaceId,
         ...(projectId ? { id: projectId } : {}),
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
         tasks: {
-          include: {
-            column: true,
+          select: {
+            id: true,
+            completedAt: true,
+            priority: true,
+            column: { select: { name: true } },
             assignee: { select: { id: true, name: true } },
           },
         },
-        members: { include: { user: { select: { id: true, name: true } } } },
       },
     });
 
@@ -175,7 +241,6 @@ router.get(
         teamMap.set(task.assignee.id, entry);
       }
 
-      // Simple burndown: remaining tasks over last 14 days snapshot approximation
       const burndown = Array.from({ length: 14 }, (_, i) => {
         const day = new Date();
         day.setDate(day.getDate() - (13 - i));
@@ -205,23 +270,18 @@ router.get(
       };
     });
 
+    const totalTasks = projects.reduce((s, p) => s + p.tasks.length, 0);
+    const doneTasks = projects.reduce(
+      (s, p) =>
+        s +
+        p.tasks.filter((t) => t.completedAt || t.column.name.toLowerCase() === 'done').length,
+      0
+    );
+
     res.json({
       projectHealth,
       teamPerformance: Array.from(teamMap.values()),
-      completionRate:
-        projects.reduce((s, p) => s + p.tasks.length, 0) === 0
-          ? 0
-          : Math.round(
-              (projects.reduce(
-                (s, p) =>
-                  s +
-                  p.tasks.filter((t) => t.completedAt || t.column.name.toLowerCase() === 'done')
-                    .length,
-                0
-              ) /
-                projects.reduce((s, p) => s + p.tasks.length, 0)) *
-                100
-            ),
+      completionRate: totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100),
     });
   })
 );

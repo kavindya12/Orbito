@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, Calendar, Users, Sparkles } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, CheckSquare, Users, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const items = [
   { to: '/app', icon: LayoutDashboard, label: 'Home', end: true },
+  { to: '/app/my-tasks', icon: CheckSquare, label: 'Tasks' },
   { to: '/app/projects', icon: FolderKanban, label: 'Projects' },
-  { to: '/app/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/app/team', icon: Users, label: 'Team' },
   { to: '/app/ai', icon: Sparkles, label: 'AI' },
 ];

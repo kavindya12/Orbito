@@ -79,7 +79,10 @@ async function main() {
     });
 
     const tasks = [
-      { title: 'Requirement Analysis', column: 'Done', priority: 'HIGH' as const, assigneeId: sarah.id },
+      { title: 'Requirement Analysis', column: 'Done', priority: 'HIGH' as const, assigneeId: sarah.id, daysAgo: 10 },
+      { title: 'Stakeholder Sign-off', column: 'Done', priority: 'MEDIUM' as const, assigneeId: kavindya.id, daysAgo: 8 },
+      { title: 'Initial Architecture', column: 'Done', priority: 'HIGH' as const, assigneeId: john.id, daysAgo: 5 },
+      { title: 'Auth Spike', column: 'Done', priority: 'MEDIUM' as const, assigneeId: kavindya.id, daysAgo: 3 },
       { title: 'Database Design', column: 'To Do', priority: 'HIGH' as const, assigneeId: sarah.id },
       { title: 'Build Login Interface', column: 'Development', priority: 'HIGH' as const, assigneeId: kavindya.id },
       { title: 'API Development', column: 'Development', priority: 'URGENT' as const, assigneeId: john.id },
@@ -90,6 +93,10 @@ async function main() {
     for (let i = 0; i < tasks.length; i++) {
       const t = tasks[i];
       const column = cols.find((c) => c.name === t.column)!;
+      const completedAt =
+        t.column === 'Done' && t.daysAgo != null
+          ? new Date(Date.now() - t.daysAgo * 86400000)
+          : null;
       await prisma.task.create({
         data: {
           projectId: project.id,
@@ -101,7 +108,7 @@ async function main() {
           position: i,
           estimateHours: 8,
           dueDate: new Date(Date.now() + (i + 2) * 86400000),
-          completedAt: t.column === 'Done' ? new Date() : null,
+          completedAt,
           description: `Seeded task for ${t.title}`,
         },
       });

@@ -27,26 +27,46 @@ router.get(
   asyncHandler(async (req, res) => {
     await requireWorkspaceMember(req.params.workspaceId, req.user!.id);
     const status = (req.query.status as string) || 'ACTIVE';
-    const projects = await prisma.project.findMany({
-      where: {
-        workspaceId: req.params.workspaceId,
-        ...(status === 'ALL' ? {} : { status: status as 'ACTIVE' | 'ARCHIVED' | 'COMPLETED' }),
-      },
-      include: {
-        members: { include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } } },
-        _count: { select: { tasks: true } },
-        tasks: { select: { id: true, completedAt: true, column: { select: { name: true } } } },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
+    const statusFilter =
+      status === 'ALL' ? {} : { status: status as 'ACTIVE' | 'ARCHIVED' | 'COMPLETED' };
+
+    const [projects, completedGroups] = await Promise.all([
+      prisma.project.findMany({
+        where: {
+          workspaceId: req.params.workspaceId,
+          ...statusFilter,
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          deadline: true,
+          workspaceId: true,
+          ownerId: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: { select: { tasks: true } },
+        },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      prisma.task.groupBy({
+        by: ['projectId'],
+        where: {
+          project: { workspaceId: req.params.workspaceId, ...statusFilter },
+          OR: [{ completedAt: { not: null } }, { column: { name: 'Done' } }],
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const completedMap = new Map(completedGroups.map((g) => [g.projectId, g._count._all]));
 
     res.json(
       projects.map((p) => {
-        const completed = p.tasks.filter(
-          (t) => t.completedAt || t.column.name.toLowerCase() === 'done'
-        ).length;
-        const total = p.tasks.length;
-        const { tasks, ...rest } = p;
+        const total = p._count.tasks;
+        const completed = completedMap.get(p.id) ?? 0;
+        const { _count, ...rest } = p;
         return {
           ...rest,
           progress: total === 0 ? 0 : Math.round((completed / total) * 100),

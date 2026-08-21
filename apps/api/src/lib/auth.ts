@@ -47,11 +47,8 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
     return next(new AppError('Unauthorized', 401, 'UNAUTHORIZED'));
   }
   try {
-    const token = header.slice(7);
-    const user = verifyAccessToken(token);
-    const exists = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true } });
-    if (!exists) return next(new AppError('Unauthorized', 401, 'UNAUTHORIZED'));
-    req.user = user;
+    // Trust a valid JWT for request auth (avoids a DB round-trip on every API call).
+    req.user = verifyAccessToken(header.slice(7));
     next();
   } catch {
     next(new AppError('Invalid or expired token', 401, 'TOKEN_EXPIRED'));

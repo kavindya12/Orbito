@@ -53,6 +53,41 @@ const taskInclude = {
   _count: { select: { comments: true, attachments: true } },
 };
 
+/** Tasks assigned to the signed-in user (optionally scoped to a workspace). */
+router.get(
+  '/mine',
+  asyncHandler(async (req, res) => {
+    const workspaceId = req.query.workspaceId as string | undefined;
+    if (workspaceId) {
+      await requireWorkspaceMember(workspaceId, req.user!.id);
+    }
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        assigneeId: req.user!.id,
+        ...(workspaceId ? { project: { workspaceId } } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        priority: true,
+        dueDate: true,
+        completedAt: true,
+        projectId: true,
+        columnId: true,
+        updatedAt: true,
+        column: { select: { id: true, name: true, color: true } },
+        project: { select: { id: true, name: true, workspaceId: true } },
+        assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+      orderBy: [{ dueDate: 'asc' }, { updatedAt: 'desc' }],
+    });
+
+    res.json(tasks);
+  })
+);
+
 router.post(
   '/project/:projectId',
   validateBody(createTaskSchema),

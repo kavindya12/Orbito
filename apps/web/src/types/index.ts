@@ -5,14 +5,6 @@ export type User = {
   avatarUrl?: string | null;
 };
 
-export type Workspace = {
-  id: string;
-  name: string;
-  role?: string;
-  projectCount?: number;
-  memberCount?: number;
-};
-
 export type Project = {
   id: string;
   name: string;

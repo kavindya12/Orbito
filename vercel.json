@@ -1,10 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "vite",
+  "framework": null,
   "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "npm run build -w @orbito/shared && npm run build -w @orbito/web",
+  "buildCommand": "npm run build:web",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

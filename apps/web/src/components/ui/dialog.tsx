@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogPortal = DialogPrimitive.Portal;
-export const DialogClose = DialogPrimitive.Close;
 
 export const DialogOverlay = forwardRef<
   ElementRef<typeof DialogPrimitive.Overlay>,
@@ -55,11 +54,3 @@ export const DialogTitle = forwardRef<
   <DialogPrimitive.Title ref={ref} className={cn('text-lg font-semibold', className)} {...props} />
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
-
-export const DialogDescription = forwardRef<
-  ElementRef<typeof DialogPrimitive.Description>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description ref={ref} className={cn('text-sm text-[var(--muted)]', className)} {...props} />
-));
-DialogDescription.displayName = DialogPrimitive.Description.displayName;

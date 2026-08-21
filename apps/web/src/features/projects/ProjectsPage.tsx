@@ -34,6 +34,7 @@ export function ProjectsPage() {
       return data;
     },
     enabled: !!workspace?.id,
+    staleTime: 60_000,
   });
 
   const deleteMutation = useMutation({
@@ -73,9 +74,11 @@ export function ProjectsPage() {
         ...data,
         deadline: data.deadline ? new Date(data.deadline).toISOString() : null,
       });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
       reset();
       setCreateOpen(false);
+      // Don't await - waiting for list refetch kept the Create button spinning
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     } catch (err) {
       setError(getErrorMessage(err));
     }
@@ -90,8 +93,9 @@ export function ProjectsPage() {
         description: data.description || null,
         deadline: data.deadline ? new Date(data.deadline).toISOString() : null,
       });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setEditing(null);
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     } catch (err) {
       setError(getErrorMessage(err));
     }

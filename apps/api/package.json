@@ -9,7 +9,10 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "create:tester": "node scripts/create-tester.js",
+    "test:my-tasks": "node scripts/test-my-tasks.js",
+    "backfill:productivity": "node scripts/backfill-productivity.js"
   },
   "dependencies": {
     "@orbito/shared": "*",

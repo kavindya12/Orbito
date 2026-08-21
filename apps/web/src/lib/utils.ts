@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -25,9 +25,4 @@ export function initials(name: string) {
 export function formatDate(value?: string | Date | null) {
   if (!value) return '';
   return format(new Date(value), 'MMM d, yyyy');
-}
-
-export function formatRelative(value?: string | Date | null) {
-  if (!value) return '';
-  return formatDistanceToNow(new Date(value), { addSuffix: true });
 }

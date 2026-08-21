@@ -7,6 +7,7 @@ import http from 'http';
 import { errorHandler } from './lib/errors';
 import { configureCloudinary } from './lib/upload';
 import { initSocket } from './lib/socket';
+import { prisma } from './lib/prisma';
 
 import authRoutes from './modules/auth/routes';
 import workspaceRoutes from './modules/workspaces/routes';
@@ -59,6 +60,25 @@ app.use('/api/ai', aiRoutes);
 app.use(errorHandler);
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => {
-  console.log(`Orbito API running on http://localhost:${port}`);
-});
+
+async function start() {
+  try {
+    await prisma.$connect();
+    // Touch DB so the first real user request is not a cold wake.
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (err) {
+    console.error('Database connection failed:', err);
+    process.exit(1);
+  }
+
+  server.listen(port, () => {
+    console.log(`Orbito API running on http://localhost:${port}`);
+  });
+
+  // Keep SQLite / process warm so idle periods do not cause multi-second first requests.
+  setInterval(() => {
+    prisma.$queryRaw`SELECT 1`.catch(() => undefined);
+  }, 30_000).unref();
+}
+
+start();

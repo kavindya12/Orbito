@@ -1,17 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Sparkles } from 'lucide-react';
-import type { ElementType } from 'react';
+import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
+import { lazy, Suspense, type ElementType } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
 import { format, parseISO } from 'date-fns';
 import api from '@/services/api';
 import { useCurrentWorkspace } from '@/store/auth-store';
@@ -20,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import type { DashboardData } from '@/types';
+
+const ProductivityChart = lazy(() => import('./ProductivityChart'));
 
 function StatCard({
   title,
@@ -33,19 +25,17 @@ function StatCard({
   color: string;
 }) {
   return (
-    <motion.div whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 300 }}>
-      <Card className="glass">
-        <CardContent className="flex items-center gap-4 p-6">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-[12px] ${color}`}>
-            <Icon className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-sm text-[var(--muted)]">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <Card className="glass">
+      <CardContent className="flex items-center gap-4 p-6">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-[12px] ${color}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-sm text-[var(--muted)]">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -59,6 +49,7 @@ export function DashboardPage() {
       return data;
     },
     enabled: !!workspace?.id,
+    staleTime: 60_000,
   });
 
   if (!workspace) {
@@ -66,12 +57,18 @@ export function DashboardPage() {
   }
 
   if (isLoading) {
-    return <div className="flex h-64 items-center justify-center text-[var(--muted)]">Loading dashboard...</div>;
+    return (
+      <div className="flex h-64 items-center justify-center gap-2 text-[var(--muted)]">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Loading dashboard...
+      </div>
+    );
   }
 
   const chartData = data?.productivityTrend.map((d) => ({
     ...d,
-    label: format(parseISO(d.date), 'MMM d'),
+    // Noon avoids timezone day-shift when parsing YYYY-MM-DD
+    label: format(parseISO(`${d.date}T12:00:00`), 'MMM d'),
   }));
 
   return (
@@ -90,44 +87,36 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="prodGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="label" stroke="var(--muted)" fontSize={12} />
-                  <YAxis stroke="var(--muted)" fontSize={12} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }} />
-                  <Area type="monotone" dataKey="completed" stroke="#6366F1" fill="url(#prodGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center text-sm text-[var(--muted)]">
+                    Loading chart...
+                  </div>
+                }
+              >
+                <ProductivityChart data={chartData ?? []} />
+              </Suspense>
             </div>
           </CardContent>
         </Card>
 
-        <motion.div whileHover={{ scale: 1.01 }}>
-          <Card className="ai-gradient h-full text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Sparkles className="h-5 w-5" />
-                AI Insight
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{data?.productivityScore ?? 0}%</p>
-              <p className="mt-2 text-sm text-white/80">Productivity score across active projects</p>
-              <Link to="/app/ai" className="mt-4 inline-block">
-                <Button variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
-                  Ask AI
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <Card className="ai-gradient h-full text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Sparkles className="h-5 w-5" />
+              AI Insight
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{data?.productivityScore ?? 0}%</p>
+            <p className="mt-2 text-sm text-white/80">Productivity score across active projects</p>
+            <Link to="/app/ai" className="mt-4 inline-block">
+              <Button variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
+                Ask AI
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -157,9 +146,7 @@ export function DashboardPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-[var(--muted)]">
-                    {item.type === 'project'
-                      ? 'Project deadline'
-                      : item.project?.name}
+                    {item.type === 'project' ? 'Project deadline' : item.project?.name}
                     {item.assignee ? ` · ${item.assignee.name}` : ''}
                   </p>
                 </div>
