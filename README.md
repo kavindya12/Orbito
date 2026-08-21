@@ -34,8 +34,8 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query, Zustand, Recharts |
 | Backend | Node.js, Express, Prisma, JWT, Socket.IO |
 | Shared | Zod schemas (`@orbito/shared`) |
-| Database (local) | PostgreSQL (Docker Compose) |
-| Database (production) | PostgreSQL (Render) |
+| Database (local) | SQLite |
+| Database (production) | PostgreSQL (Render Blueprint) |
 
 **Monorepo layout**
 
@@ -49,7 +49,7 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 
 ## Quick start
 
-**Requirements:** Node.js 20+, Docker (for local Postgres)
+**Requirements:** Node.js 20+
 
 ### 1. Install dependencies
 
@@ -57,11 +57,7 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 npm install --legacy-peer-deps
 ```
 
-### 2. Start Postgres + configure environment
-
-```bash
-docker compose up -d
-```
+### 2. Configure environment
 
 ```bash
 # Windows
@@ -77,6 +73,8 @@ Create `apps/web/.env` with:
 VITE_API_URL=http://localhost:4000/api
 VITE_SOCKET_URL=http://localhost:4000
 ```
+
+See [`.env.example`](.env.example) for every variable (JWT, CORS, Cloudinary, OpenAI).
 
 ### 3. Set up the database
 
