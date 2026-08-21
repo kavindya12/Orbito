@@ -175,28 +175,15 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:5174
 
 ### Backend (Render) — do this first
 
-Repo includes [`render.yaml`](render.yaml).
+**Full free-tier guide:** [docs/RENDER.md](docs/RENDER.md)
 
-1. Go to [render.com](https://render.com) → **New** → **Blueprint**
-2. Connect `kavindya12/Orbito`
-3. Apply the Blueprint (creates **orbito-api** + **orbito-db** Postgres)
-4. In the **orbito-api** service → **Environment**, set:
+Short version:
 
-```env
-CLIENT_URL=https://YOUR-VERCEL-APP.vercel.app
-CORS_ORIGIN=https://YOUR-VERCEL-APP.vercel.app,https://YOUR-VERCEL-APP.vercel.app
-```
-
-(Add your staging domain too if you use one, comma-separated.)
-
-5. Deploy, then open: `https://YOUR-API.onrender.com/api/health`  
-   You should see `{ "ok": true, "service": "orbito-api" }`
-
-6. Seed demo users (Render Shell on the API service):
-
-```bash
-npm run db:seed -w @orbito/api
-```
+1. [render.com](https://render.com) → **New** → **Blueprint** → connect `kavindya12/Orbito`
+2. Apply ([`render.yaml`](render.yaml) creates **orbito-api** + **orbito-db**)
+3. Set `CLIENT_URL` and `CORS_ORIGIN` to your Vercel URL
+4. Check `https://YOUR-API.onrender.com/api/health`
+5. Optional seed in Render Shell: `npm run db:seed -w @orbito/api`
 
 ### Frontend (Vercel)
 
