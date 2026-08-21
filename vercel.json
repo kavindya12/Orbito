@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "npm run build:web",
+  "installCommand": "npm install --legacy-peer-deps --workspace=@orbito/web --workspace=@orbito/shared --include-workspace-root",
+  "buildCommand": "cd apps/web && npx vite build",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
