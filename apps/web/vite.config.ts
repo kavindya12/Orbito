@@ -8,6 +8,12 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: process.env.VITE_BASE || '/',
+  define: {
+    // Force demo mode for GitHub Pages builds
+    ...(process.env.VITE_DEMO_MODE === 'true' || process.env.VITE_BASE === '/Orbito/'
+      ? { 'import.meta.env.VITE_DEMO_MODE': JSON.stringify('true') }
+      : {}),
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

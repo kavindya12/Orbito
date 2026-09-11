@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import api, { getErrorMessage } from '@/services/api';
+import { demoLogin, isDemoMode } from '@/services/demo-api';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const [error, setError] = useState('');
+  const demo = typeof window !== 'undefined' && isDemoMode();
   const {
     register,
     handleSubmit,
@@ -26,6 +28,13 @@ export function LoginPage() {
   const onSubmit = async (data: LoginInput) => {
     setError('');
     try {
+      // GitHub Pages: never call the network (avoids 405)
+      if (isDemoMode()) {
+        const res = await demoLogin(data.email, data.password);
+        login(res.user, res.accessToken, res.workspaces);
+        navigate('/app');
+        return;
+      }
       const res = await api.post('/auth/login', data);
       login(res.data.user, res.data.accessToken, res.data.workspaces ?? []);
       navigate('/app');
@@ -41,6 +50,11 @@ export function LoginPage() {
           <OrbitoLogo size={40} />
           <h1 className="text-2xl font-bold">Welcome back</h1>
           <p className="text-sm text-[var(--muted)]">Sign in to your Orbito workspace</p>
+          {demo && (
+            <p className="rounded-md bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400">
+              Demo mode — use kavindya@orbito.dev / password123
+            </p>
+          )}
         </div>
         <Card className="glass">
           <CardHeader>

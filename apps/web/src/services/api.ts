@@ -2,21 +2,17 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/auth-store';
 import { demoAdapter, isDemoMode } from '@/services/demo-api';
 
-function resolveApiBase() {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  if (isDemoMode()) return 'https://demo.orbito.local/api';
-  if (import.meta.env.PROD) return '/api';
-  return 'http://localhost:4000/api';
-}
-
 const api = axios.create({
-  baseURL: resolveApiBase(),
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000/api',
   withCredentials: true,
   timeout: 15000,
-  ...(isDemoMode() ? { adapter: demoAdapter } : {}),
 });
 
+// Attach demo adapter on every request when on GitHub Pages (no network call).
 api.interceptors.request.use((config) => {
+  if (isDemoMode()) {
+    config.adapter = demoAdapter;
+  }
   const token = useAuthStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -72,11 +68,10 @@ api.interceptors.response.use(
 export function getErrorMessage(err: unknown) {
   if (axios.isAxiosError(err)) {
     if (err.response?.status === 405) {
-      return 'GitHub Pages has no API. Use demo login or run locally (npm run dev:api).';
+      return 'Still on an old build. Hard-refresh (Ctrl+Shift+R) or wait for GitHub Actions to finish.';
     }
     if (err.code === 'ECONNABORTED') return 'Request timed out. Is the API running?';
     if (!err.response) {
-      if (isDemoMode()) return 'Demo mode error — try kavindya@orbito.dev / password123';
       return 'Cannot reach API. Start the backend with npm run dev:api';
     }
     return (err.response?.data as { message?: string })?.message || err.message;

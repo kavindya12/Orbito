@@ -1,0 +1,14 @@
+# 404.html for GitHub Pages SPA routing
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Orbito</title>
+    <script>
+      // Redirect unknown paths back into the SPA under /Orbito/
+      sessionStorage.setItem('orbito-redirect', location.href);
+      location.replace('/Orbito/');
+    </script>
+  </head>
+  <body></body>
+</html>

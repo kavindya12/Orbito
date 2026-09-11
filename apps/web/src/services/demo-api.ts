@@ -4,7 +4,9 @@ import type { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } fr
 export function isDemoMode() {
   if (import.meta.env.VITE_DEMO_MODE === 'true') return true;
   if (import.meta.env.VITE_API_URL) return false;
-  if (typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')) return true;
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')) {
+    return true;
+  }
   return false;
 }
 
@@ -46,6 +48,19 @@ const demoProjects = [
   },
 ];
 
+/** Direct demo login — does not use the network (fixes GitHub Pages 405). */
+export async function demoLogin(email: string, password: string) {
+  await new Promise((r) => setTimeout(r, 150));
+  if (email === 'kavindya@orbito.dev' && password === 'password123') {
+    return {
+      user: demoUser,
+      accessToken: 'demo-token',
+      workspaces: [demoWorkspace],
+    };
+  }
+  throw new Error('Invalid email or password. Use kavindya@orbito.dev / password123');
+}
+
 function ok<T>(data: T, config: AxiosRequestConfig): AxiosResponse<T> {
   return {
     data,
@@ -76,29 +91,19 @@ function pathOf(config: AxiosRequestConfig) {
 }
 
 export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResponse> {
-  // Simulate a tiny network delay
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 150));
 
   const method = (config.method || 'get').toLowerCase();
   const path = pathOf(config);
   const body =
-    typeof config.data === 'string'
-      ? JSON.parse(config.data || '{}')
-      : config.data || {};
+    typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
 
-  // Auth
   if (method === 'post' && path.endsWith('/auth/login')) {
-    if (body.email === 'kavindya@orbito.dev' && body.password === 'password123') {
-      return ok(
-        {
-          user: demoUser,
-          accessToken: 'demo-token',
-          workspaces: [demoWorkspace],
-        },
-        config
-      );
+    try {
+      return ok(await demoLogin(body.email, body.password), config);
+    } catch (e) {
+      fail(e instanceof Error ? e.message : 'Login failed', 401);
     }
-    fail('Invalid email or password', 401);
   }
 
   if (method === 'post' && path.endsWith('/auth/register')) {
@@ -112,19 +117,14 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
     );
   }
 
-  if (method === 'post' && path.endsWith('/auth/logout')) {
-    return ok({ ok: true }, config);
-  }
-
+  if (method === 'post' && path.endsWith('/auth/logout')) return ok({ ok: true }, config);
   if (method === 'post' && path.endsWith('/auth/refresh')) {
     return ok({ accessToken: 'demo-token', user: demoUser }, config);
   }
-
   if (method === 'patch' && path.endsWith('/auth/me')) {
     return ok({ user: { ...demoUser, name: body.name || demoUser.name } }, config);
   }
 
-  // Dashboard
   if (method === 'get' && path.includes('/dashboard/workspace/')) {
     const today = new Date();
     const trend = Array.from({ length: 14 }, (_, i) => {
@@ -155,13 +155,6 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
           {
             id: 'a1',
             action: 'completed Requirement Analysis',
-            createdAt: new Date().toISOString(),
-            user: demoUser,
-            project: { id: 'demo-proj-1', name: 'MediEase Healthcare System' },
-          },
-          {
-            id: 'a2',
-            action: 'created project',
             createdAt: new Date().toISOString(),
             user: demoUser,
             project: { id: 'demo-proj-1', name: 'MediEase Healthcare System' },
@@ -197,10 +190,7 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
     );
   }
 
-  // Projects
-  if (method === 'get' && path.includes('/projects/workspace/')) {
-    return ok(demoProjects, config);
-  }
+  if (method === 'get' && path.includes('/projects/workspace/')) return ok(demoProjects, config);
 
   if (method === 'get' && /\/projects\/[^/]+$/.test(path) && !path.includes('/workspace/')) {
     const project = demoProjects[0];
@@ -266,16 +256,11 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
   if (method === 'post' && path.includes('/projects/workspace/')) {
     return ok({ id: 'demo-proj-new', name: body.name, status: 'ACTIVE', ...body }, config);
   }
-
   if (method === 'patch' && path.includes('/projects/')) {
     return ok({ ...demoProjects[0], ...body }, config);
   }
+  if (method === 'delete' && path.includes('/projects/')) return ok({ ok: true }, config);
 
-  if (method === 'delete' && path.includes('/projects/')) {
-    return ok({ ok: true }, config);
-  }
-
-  // Tasks
   if (method === 'get' && path.includes('/tasks/mine')) {
     return ok(
       [
@@ -285,7 +270,11 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
           priority: 'HIGH',
           completedAt: null,
           dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
-          project: { id: 'demo-proj-1', name: 'MediEase Healthcare System', workspaceId: demoWorkspace.id },
+          project: {
+            id: 'demo-proj-1',
+            name: 'MediEase Healthcare System',
+            workspaceId: demoWorkspace.id,
+          },
           column: { id: 'col-2', name: 'Development', color: '#6366F1' },
         },
       ],
@@ -297,7 +286,6 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
     return ok({ ok: true, ...body }, config);
   }
 
-  // Team / notifications / calendar / search / AI — safe empty defaults
   if (method === 'get' && path.includes('/members')) {
     return ok(
       [
@@ -309,10 +297,7 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
     );
   }
 
-  if (method === 'get' && path.includes('/notifications/unread-count')) {
-    return ok({ count: 2 }, config);
-  }
-
+  if (method === 'get' && path.includes('/notifications/unread-count')) return ok({ count: 2 }, config);
   if (method === 'get' && path.includes('/notifications')) {
     return ok(
       [
@@ -327,19 +312,11 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
       config
     );
   }
-
-  if (method === 'post' && path.includes('/notifications')) {
-    return ok({ ok: true }, config);
-  }
-
-  if (method === 'get' && path.includes('/calendar')) {
-    return ok({ tasks: [], milestones: [] }, config);
-  }
-
+  if (method === 'post' && path.includes('/notifications')) return ok({ ok: true }, config);
+  if (method === 'get' && path.includes('/calendar')) return ok({ tasks: [], milestones: [] }, config);
   if (method === 'get' && path.includes('/search')) {
     return ok({ tasks: [], projects: demoProjects, users: [demoUser], comments: [] }, config);
   }
-
   if (method === 'post' && path.includes('/ai/')) {
     return ok(
       {
@@ -352,7 +329,6 @@ export async function demoAdapter(config: AxiosRequestConfig): Promise<AxiosResp
     );
   }
 
-  // Fallback so the UI does not crash
   if (method === 'get') return ok([], config);
   return ok({ ok: true }, config);
 }
