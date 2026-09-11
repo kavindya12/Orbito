@@ -24,35 +24,19 @@ After this workflow is on `main`:
 2. Wait until it is green
 3. Open: https://kavindya12.github.io/Orbito/
 
-You should see the Orbito **login page**, not the README.
+You should see the Orbito **login / landing UI**, not the README.
 
 ---
 
-## 3. Important limit (no card hosts)
+## 3. Important limit
 
 GitHub Pages is **frontend only**. It cannot run the Express API or the database.
 
-| What works on Pages | What needs an API |
-|---------------------|-------------------|
+| What works on Pages | What needs the local API |
+|---------------------|---------------------------|
 | UI / screens load | Login, projects, tasks, dashboard data |
 
-Without a hosted API (Render needs a card for many accounts):
-
-- Use the site as a **UI demo**, or  
-- Run the API on your PC and only use the app at `http://localhost:5173` for a full demo
-
-If you later get an API URL, add GitHub secrets:
-
-| Secret | Example |
-|--------|---------|
-| `VITE_API_URL` | `https://your-api.example.com/api` |
-| `VITE_SOCKET_URL` | `https://your-api.example.com` |
-
-Then re-run **Deploy GitHub Pages**.
-
----
-
-## Local full app (recommended for demos)
+For a full demo, run on your PC:
 
 ```bash
 npm run dev:api
@@ -60,3 +44,10 @@ npm run dev:web
 ```
 
 Open http://localhost:5173 or http://localhost:5174
+
+If you later have a public API URL, add GitHub secrets and re-run the workflow:
+
+| Secret | Example |
+|--------|---------|
+| `VITE_API_URL` | `https://your-api.example.com/api` |
+| `VITE_SOCKET_URL` | `https://your-api.example.com` |

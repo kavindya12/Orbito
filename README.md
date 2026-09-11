@@ -35,7 +35,7 @@ Orbito helps teams plan work, track tasks on Kanban boards, collaborate in real 
 | Backend | Node.js, Express, Prisma, JWT, Socket.IO |
 | Shared | Zod schemas (`@orbito/shared`) |
 | Database (local) | SQLite |
-| Database (production) | PostgreSQL (Render Blueprint) |
+| Database (optional remote) | PostgreSQL |
 
 **Monorepo layout**
 
@@ -137,7 +137,7 @@ npm run backfill:productivity -w @orbito/api
 |---------|-------------|
 | `npm run dev:api` | Start API (watch mode) |
 | `npm run dev:web` | Start Vite frontend |
-| `npm run build:web` | Build shared + web (used by Vercel) |
+| `npm run build:web` | Build the Vite frontend |
 | `npm run db:push` | Push Prisma schema to the DB |
 | `npm run db:generate` | Generate Prisma client |
 | `npm run db:seed` | Seed demo workspace, project, and users |
@@ -173,8 +173,14 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:5174
 
 ## Deploy
 
-- **GitHub Pages (UI only, no card):** [docs/GITHUB_PAGES.md](docs/GITHUB_PAGES.md)
-- **Render (full app, may need card):** [docs/RENDER.md](docs/RENDER.md)
+**GitHub Pages (frontend UI):** see [docs/GITHUB_PAGES.md](docs/GITHUB_PAGES.md)
+
+For a full working app (login, tasks, dashboard), run locally:
+
+```bash
+npm run dev:api
+npm run dev:web
+```
 
 ---
 
