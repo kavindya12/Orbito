@@ -30,11 +30,8 @@ jobs:
 
       - name: Build web app
         env:
-          # Required for repo site https://kavindya12.github.io/Orbito/
           VITE_BASE: /Orbito/
-          # Only set if you add repo secrets — otherwise leave unset (Pages has no API)
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
+          VITE_DEMO_MODE: "true"
         run: npm run build -w @orbito/web
 
       - name: Upload Pages artifact

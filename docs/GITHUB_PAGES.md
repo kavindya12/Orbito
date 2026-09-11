@@ -1,49 +1,43 @@
-# Fix GitHub Pages (show the app, not the README)
+# GitHub Pages for Orbito
 
-Right now `https://kavindya12.github.io/Orbito/` shows the **README** because Pages is publishing the repo root.
-
-Orbito’s real UI is the Vite build in `apps/web/dist`. This repo includes a GitHub Action that builds and deploys that.
+Site: https://kavindya12.github.io/Orbito/
 
 ---
 
-## 1. Turn on GitHub Pages (Actions)
+## 1. Enable Pages
 
-1. Open repo → **Settings** → **Pages**
-2. Under **Build and deployment** → **Source**, choose **GitHub Actions**
+1. Repo → **Settings** → **Pages**
+2. **Source** → **GitHub Actions**
 3. Save
 
-Do **not** use “Deploy from a branch” with `/ (root)` — that is why you see the README.
+Do **not** use “Deploy from a branch” with root — that only shows the README.
 
 ---
 
-## 2. Push / re-run the workflow
+## 2. Wait for deploy
 
-After this workflow is on `main`:
-
-1. Repo → **Actions** → **Deploy GitHub Pages**
-2. Wait until it is green
-3. Open: https://kavindya12.github.io/Orbito/
-
-You should see the Orbito **login / landing UI**, not the README.
+1. **Actions** → **Deploy GitHub Pages** → wait for green  
+2. Open https://kavindya12.github.io/Orbito/
 
 ---
 
-## 3. Important: login will not work on GitHub Pages alone
+## 3. Login on GitHub Pages (demo mode)
 
-**405 / login errors** happen because Pages is static HTML/JS only. It cannot accept `POST /api/auth/login`.
+GitHub Pages cannot run the real API. This site uses **demo mode**:
 
-| Site | Login works? |
-|------|----------------|
-| https://kavindya12.github.io/Orbito/ | UI only — no |
-| http://localhost:5173 with API running | Yes |
+| Email | Password |
+|-------|----------|
+| `kavindya@orbito.dev` | `password123` |
 
-For a full working app:
+You can browse dashboard, projects, and sample data. Changes are not saved to a real database.
+
+---
+
+## Full app on your PC (real API + SQLite)
 
 ```bash
 npm run dev:api
 npm run dev:web
 ```
 
-Open http://localhost:5173 or http://localhost:5174  
-Demo: `kavindya@orbito.dev` / `password123`
-
+Open http://localhost:5173 or http://localhost:5174

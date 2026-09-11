@@ -67,6 +67,9 @@ export function LoginPage() {
             </form>
             <p className="mt-4 text-center text-xs text-[var(--muted)]">
               Demo: kavindya@orbito.dev / password123
+              {typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')
+                ? ' (works here in demo mode)'
+                : ''}
             </p>
             <p className="mt-4 text-center text-sm text-[var(--muted)]">
               No account?{' '}

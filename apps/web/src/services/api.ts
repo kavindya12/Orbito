@@ -1,12 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/auth-store';
+import { demoAdapter, isDemoMode } from '@/services/demo-api';
 
 function resolveApiBase() {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  // GitHub Pages is static-only — do not POST to /api on github.io (that returns 405).
-  if (typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')) {
-    return 'http://127.0.0.1:9'; // unreachable; error handler shows a clear message
-  }
+  if (isDemoMode()) return 'https://demo.orbito.local/api';
   if (import.meta.env.PROD) return '/api';
   return 'http://localhost:4000/api';
 }
@@ -15,6 +13,7 @@ const api = axios.create({
   baseURL: resolveApiBase(),
   withCredentials: true,
   timeout: 15000,
+  ...(isDemoMode() ? { adapter: demoAdapter } : {}),
 });
 
 api.interceptors.request.use((config) => {
@@ -33,6 +32,8 @@ function isAuthPath(url?: string) {
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
+    if (isDemoMode()) return Promise.reject(error);
+
     const original = error.config;
     if (
       error.response?.status === 401 &&
@@ -71,13 +72,11 @@ api.interceptors.response.use(
 export function getErrorMessage(err: unknown) {
   if (axios.isAxiosError(err)) {
     if (err.response?.status === 405) {
-      return 'This GitHub Pages site is UI-only. For login, run locally: npm run dev:api and npm run dev:web';
+      return 'GitHub Pages has no API. Use demo login or run locally (npm run dev:api).';
     }
     if (err.code === 'ECONNABORTED') return 'Request timed out. Is the API running?';
     if (!err.response) {
-      if (typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')) {
-        return 'No API on GitHub Pages. Run locally: npm run dev:api and npm run dev:web';
-      }
+      if (isDemoMode()) return 'Demo mode error — try kavindya@orbito.dev / password123';
       return 'Cannot reach API. Start the backend with npm run dev:api';
     }
     return (err.response?.data as { message?: string })?.message || err.message;
