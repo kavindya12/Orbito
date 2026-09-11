@@ -173,30 +173,13 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:5174
 
 ## Deploy
 
-### Backend (Render) — do this first
-
-**Full free-tier guide:** [docs/RENDER.md](docs/RENDER.md)
-
-Short version:
+**Full free guide (one URL, no Vercel):** [docs/RENDER.md](docs/RENDER.md)
 
 1. [render.com](https://render.com) → **New** → **Blueprint** → connect `kavindya12/Orbito`
-2. Apply ([`render.yaml`](render.yaml) creates **orbito-api** + **orbito-db**)
-3. Set `CLIENT_URL` and `CORS_ORIGIN` to your Vercel URL
-4. Check `https://YOUR-API.onrender.com/api/health`
-5. Optional seed in Render Shell: `npm run db:seed -w @orbito/api`
-
-### Frontend (Vercel)
-
-1. Import [kavindya12/Orbito](https://github.com/kavindya12/Orbito)
-2. **Root Directory** empty · Framework **Other** · Node **20.x**
-3. Env vars (Production + Staging):
-
-```env
-VITE_API_URL=https://YOUR-API.onrender.com/api
-VITE_SOCKET_URL=https://YOUR-API.onrender.com
-```
-
-4. Redeploy Vercel after the API URL is live
+2. Apply ([`render.yaml`](render.yaml) creates **orbito** + **orbito-db**)
+3. Set `CLIENT_URL` and `CORS_ORIGIN` to your Render URL (e.g. `https://orbito-xxxx.onrender.com`)
+4. Open that URL — website + API are on the same host
+5. Optional seed: `npm run db:seed -w @orbito/api` in Render Shell
 
 ---
 

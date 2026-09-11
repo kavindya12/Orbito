@@ -1,4 +1,4 @@
-# Orbito API on Render (Web Service + PostgreSQL)
+# Orbito — one free Render service hosts API + website
 # Dashboard: New → Blueprint → connect this repo → apply
 
 databases:
@@ -7,17 +7,19 @@ databases:
 
 services:
   - type: web
-    name: orbito-api
+    name: orbito
     runtime: node
     plan: free
     region: oregon
     rootDir: .
-    buildCommand: npm install --legacy-peer-deps && npm run build -w @orbito/shared && node -e "const fs=require('fs');const p='apps/api/prisma/schema.prisma';fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace('provider = \"sqlite\"','provider = \"postgresql\"'))" && npm run build -w @orbito/api && npm run db:push -w @orbito/api
+    buildCommand: npm install --legacy-peer-deps && npm run build -w @orbito/shared && node -e "const fs=require('fs');const p='apps/api/prisma/schema.prisma';fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace('provider = \"sqlite\"','provider = \"postgresql\"'))" && VITE_API_URL=/api npm run build -w @orbito/web && npm run build -w @orbito/api && npm run db:push -w @orbito/api
     startCommand: npm run start -w @orbito/api
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: "20"
+      - key: SERVE_WEB
+        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: orbito-db

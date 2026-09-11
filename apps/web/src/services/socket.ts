@@ -7,10 +7,13 @@ export function getSocket() {
   const token = useAuthStore.getState().accessToken;
   if (!token) return null;
   if (!socket) {
-    socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000', {
-      auth: { token },
-      autoConnect: true,
-    });
+    socket = io(
+      import.meta.env.VITE_SOCKET_URL || (import.meta.env.PROD ? undefined : 'http://localhost:4000'),
+      {
+        auth: { token },
+        autoConnect: true,
+      }
+    );
   } else {
     socket.auth = { token };
     if (!socket.connected) socket.connect();
