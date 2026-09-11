@@ -28,26 +28,22 @@ You should see the Orbito **login / landing UI**, not the README.
 
 ---
 
-## 3. Important limit
+## 3. Important: login will not work on GitHub Pages alone
 
-GitHub Pages is **frontend only**. It cannot run the Express API or the database.
+**405 / login errors** happen because Pages is static HTML/JS only. It cannot accept `POST /api/auth/login`.
 
-| What works on Pages | What needs the local API |
-|---------------------|---------------------------|
-| UI / screens load | Login, projects, tasks, dashboard data |
+| Site | Login works? |
+|------|----------------|
+| https://kavindya12.github.io/Orbito/ | UI only — no |
+| http://localhost:5173 with API running | Yes |
 
-For a full demo, run on your PC:
+For a full working app:
 
 ```bash
 npm run dev:api
 npm run dev:web
 ```
 
-Open http://localhost:5173 or http://localhost:5174
+Open http://localhost:5173 or http://localhost:5174  
+Demo: `kavindya@orbito.dev` / `password123`
 
-If you later have a public API URL, add GitHub secrets and re-run the workflow:
-
-| Secret | Example |
-|--------|---------|
-| `VITE_API_URL` | `https://your-api.example.com/api` |
-| `VITE_SOCKET_URL` | `https://your-api.example.com` |

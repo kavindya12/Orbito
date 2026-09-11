@@ -32,8 +32,8 @@ jobs:
         env:
           # Required for repo site https://kavindya12.github.io/Orbito/
           VITE_BASE: /Orbito/
-          # Optional: set repo secret VITE_API_URL to a live API (otherwise UI loads but login needs an API)
-          VITE_API_URL: ${{ secrets.VITE_API_URL || '/api' }}
+          # Only set if you add repo secrets — otherwise leave unset (Pages has no API)
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
         run: npm run build -w @orbito/web
 
