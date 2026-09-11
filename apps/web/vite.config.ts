@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  base: process.env.VITE_BASE || '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

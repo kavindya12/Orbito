@@ -15,8 +15,10 @@ import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute, PublicRoute } from './ProtectedRoute';
 
 export function AppRouter() {
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route

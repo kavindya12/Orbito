@@ -173,13 +173,8 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:5174
 
 ## Deploy
 
-**Full free guide (one URL, no Vercel):** [docs/RENDER.md](docs/RENDER.md)
-
-1. [render.com](https://render.com) → **New** → **Blueprint** → connect `kavindya12/Orbito`
-2. Apply ([`render.yaml`](render.yaml) creates **orbito** + **orbito-db**)
-3. Set `CLIENT_URL` and `CORS_ORIGIN` to your Render URL (e.g. `https://orbito-xxxx.onrender.com`)
-4. Open that URL — website + API are on the same host
-5. Optional seed: `npm run db:seed -w @orbito/api` in Render Shell
+- **GitHub Pages (UI only, no card):** [docs/GITHUB_PAGES.md](docs/GITHUB_PAGES.md)
+- **Render (full app, may need card):** [docs/RENDER.md](docs/RENDER.md)
 
 ---
 
